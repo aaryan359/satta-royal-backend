@@ -14,7 +14,7 @@ const WithdrawalSchema = new mongoose.Schema<IWithdrawal>({
     amount: {
         type: Number,
         required: true,
-        min: 100 // Minimum withdrawal amount
+        min: 100 
     },
 
     // paymentMethod indicates the method of withdrawal

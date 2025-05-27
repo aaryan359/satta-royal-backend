@@ -1,59 +1,47 @@
-import mongoose from "mongoose";
-import { IBet } from "../types/Bet";
 
 
+import mongoose from 'mongoose';
 
-const BetSchema = new mongoose.Schema<IBet>({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    game: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Game',
-        required: true
-    },
-    region: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Region',
-        required: true
-    },
-    number: {
-        type: Number,
-        required: true,
-        min: 1,
-        max: 100
-    },
+const betSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
 
-    amount: {
-        type: Number,
-        required: true,
-        min: 1
-    },
+  market: {
+    type: String,
+    required: true
+  },
 
-    potentialWinnings: {
-        type: Number,
-        required: true,
-        default: function (this: IBet) {
-            return this.amount * 100;
-        }
-    },
-    status: {
-        type: String,
-        required: true,
-        enum: ['pending', 'won', 'lost'],
-        default: 'pending'
-    },
+  number: { 
+    type: String,
+    required: true
+  },
 
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
+  amount: {
+    type: Number,
+    required: true,
+    min: 10
+  },
 
-// Indexes for performance
-BetSchema.index({ user: 1 });
-BetSchema.index({ game: 1 });
-BetSchema.index({ region: 1 });
-BetSchema.index({ status: 1 });
+  status: {
+    type: String,
+    enum: ['pending', 'won', 'lost'],
+    default: 'pending'
+  },
+
+  payout: {
+    type: Number,
+    default: 0 
+  },
+
+  bet_placed_at: {
+    type: Date,
+    default: Date.now
+  }
+
+}, { timestamps: true });
+
+const BetModel = mongoose.model('Bet', betSchema);
+export default BetModel;

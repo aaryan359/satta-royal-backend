@@ -24,7 +24,7 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
   try {
 
     // 1. Get token and check if it exists
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization;
 
     if (!token) {
       return next(new AppError("You are not logged in! Please log in to get access.", 401));

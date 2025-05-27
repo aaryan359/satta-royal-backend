@@ -3,14 +3,14 @@ import mongoose from "mongoose";
 
 
 const GameSchema = new mongoose.Schema<IGame>({
-  region: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Region', 
-    required: true 
+  region: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Region',
+    required: true
   },
 
-  date: { 
-    type: Date, 
+  date: {
+    type: Date,
     required: true,
     validate: {
       validator: (v: Date) => v > new Date(new Date().setHours(0, 0, 0, 0)),
@@ -18,16 +18,16 @@ const GameSchema = new mongoose.Schema<IGame>({
     }
   },
 
-  bettingOpenTime: { 
-    type: Date, 
-    required: true 
+  bettingOpenTime: {
+    type: Date,
+    required: true
   },
 
-  bettingCloseTime: { 
-    type: Date, 
+  bettingCloseTime: {
+    type: Date,
     required: true,
     validate: {
-      validator: function(this: IGame, v: Date) {
+      validator: function (this: IGame, v: Date) {
         return v > this.bettingOpenTime;
       },
       message: 'Betting close time must be after open time'
@@ -35,25 +35,25 @@ const GameSchema = new mongoose.Schema<IGame>({
   },
 
 
-  winningNumber: { 
-    type: Number, 
-    min: 1, 
-    max: 100 
+  winningNumber: {
+    type: Number,
+    min: 1,
+    max: 100
   },
 
 
-  status: { 
-    type: String, 
-    required: true, 
+  status: {
+    type: String,
+    required: true,
     enum: ['upcoming', 'active', 'completed'],
     default: 'upcoming'
   },
 
-  resultDeclarationTime:{
+  resultDeclarationTime: {
     type: Date,
     required: true,
     validate: {
-      validator: function(this: IGame, v: Date) {
+      validator: function (this: IGame, v: Date) {
         return v > this.bettingCloseTime;
       },
       message: 'Result declaration time must be after betting close time'

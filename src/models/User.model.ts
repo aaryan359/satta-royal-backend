@@ -48,10 +48,18 @@ const UserSchema = new mongoose.Schema<IUser>({
   referralCode: {
     type: String,
     unique: true,
-    default: function(this: IUser) {
+    default: function (this: IUser) {
       return `REF-${this._id.toString().slice(-6).toUpperCase()}`;
     }
   },
+  bet_history: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bet'
+  }],
+  transactions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Transaction'
+  }],
 
   kycStatus: {
     type: String,
@@ -59,26 +67,26 @@ const UserSchema = new mongoose.Schema<IUser>({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
-  
+
   isActive: {
     type: Boolean,
     required: true,
     default: true
   },
 
-  createdAt: { 
+  createdAt: {
     type: Date,
-     default: Date.now
-     },
+    default: Date.now
+  },
 
   updatedAt: {
-     type: Date,
-     default: Date.now
+    type: Date,
+    default: Date.now
   }
 });
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -89,14 +97,14 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function(
+UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Update timestamp on save
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });

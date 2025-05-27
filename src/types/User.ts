@@ -18,4 +18,6 @@ export interface IUser {
   referralBonusExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
+  bet_history?: mongoose.Types.ObjectId[];
+  transactions?: mongoose.Types.ObjectId[];
 }
