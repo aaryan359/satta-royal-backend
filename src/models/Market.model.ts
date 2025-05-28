@@ -2,16 +2,19 @@
 const mongoose = require('mongoose');
 
 const marketSchema = new mongoose.Schema({
+    
     name: {
         type: String,
         required: true,
         unique: true // e.g., "Lucky Number", "Color Bet", etc.
     },
+
     type: {
         type: String,
         enum: ['numbers', 'colors', 'cards', 'dice'], // Customize for your 8 markets
-        required: true
+        default:'numbers'
     },
+
     active_hours: {
         open: { type: String, required: true }, 
         close: { type: String, required: true } 
@@ -26,10 +29,12 @@ const marketSchema = new mongoose.Schema({
         enum: ['open', 'closed', 'result_declared'],
         default: 'closed'
     },
+
     odds: {
         type: Number,
         required: true 
     },
+
     // dont know what type it is, so using Mixed
     result: { 
         type: mongoose.Schema.Types.Mixed,
@@ -40,6 +45,7 @@ const marketSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed,
         required: true
     }],
+
     result_declared_at: {
         type: Date,
         default: null
@@ -47,6 +53,6 @@ const marketSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-const MarketSchema = mongoose.model('Market', marketSchema);
-export default MarketSchema;
+const MarketModel = mongoose.model('Market', marketSchema);
+export default MarketModel;
         

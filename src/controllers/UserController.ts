@@ -263,6 +263,8 @@ const UserController = {
       next(error);
     }
   },
+
+
   getBalance: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = await UserModel.findById(req.user?._id).select('balance');
@@ -284,6 +286,8 @@ const UserController = {
       next(error);
     }
   },
+
+  
 
 
 }

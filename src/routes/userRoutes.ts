@@ -1,7 +1,9 @@
 // routes/userRoutes.ts
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import UserController from '../controllers/UserController';
 import { verifyUser } from '../middlewares/authUser';
+import ApiResponse from '../utils/ApiResponse';
+import { token } from 'morgan';
 
 const router = express.Router();
 
@@ -14,12 +16,27 @@ router.post('/login', UserController.login as express.RequestHandler);
 // router.post('/reset-password', UserController.resetPassword as express.RequestHandler);
 
 
-router.get('/profile',verifyUser, UserController.getMe as express.RequestHandler);
+// for checking that user is authenticated or not
+router.get('/check', verifyUser, async (req: Request, res: Response, next: NextFunction) => {
+
+    ApiResponse.success(res,
+        {
+            data: req.user,
+            message: "User is authenticated",
+            statusCode: 201,
+
+        }
+    )
+
+})
+
+
+router.get('/profile', verifyUser, UserController.getMe as express.RequestHandler);
 router.patch('/update-profile', verifyUser, UserController.updateMe as express.RequestHandler);
 router.delete('/delete-profile', verifyUser, UserController.deleteMe as express.RequestHandler);
 router.patch('/balance', verifyUser, UserController.getBalance as express.RequestHandler);
 
-    
+
 
 
 export default router;
