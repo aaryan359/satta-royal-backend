@@ -16,7 +16,8 @@ const marketSchema = new mongoose.Schema({
         open: { type: String, required: true }, 
         close: { type: String, required: true } 
     },
-    current_winning_value: { // Can be number/string depending on market
+
+    current_winning_value: { 
         type: mongoose.Schema.Types.Mixed,
         default: null
     },
@@ -29,6 +30,12 @@ const marketSchema = new mongoose.Schema({
         type: Number,
         required: true 
     },
+    // dont know what type it is, so using Mixed
+    result: { 
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
+
     allowed_values: [{ 
         type: mongoose.Schema.Types.Mixed,
         required: true
@@ -39,4 +46,7 @@ const marketSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Market', marketSchema);
+
+const MarketSchema = mongoose.model('Market', marketSchema);
+export default MarketSchema;
+        
