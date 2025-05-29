@@ -51,55 +51,77 @@ class AdminController {
      /**
       * add new market
       */
-     static addMarket = async (
-          req: Request, res: Response, next: NextFunction
-     ) => {
-          try {
-               const { name, active_hours, Id } = req.body;
-               console.log(`req body is `, req.body)
+   static addMarket = async (req: Request, res: Response, next: NextFunction) => {
+     try {
+          const { name, active_hours, code } = req.body;
+          console.log('req body is', req.body);
 
-
-               // Validate input
-               if (!name || !active_hours) {
-                    return ApiResponse.error(res, {
-                         error: 'Validation Error',
-                         message: 'All fields are required.',
-                         statusCode: 400,
-                    });
-               }
-
-               // Create new market
-               const newMarket = new MarketModel({
-                    name,
-                    active_hours,
-                    odds: 1.5,
-                    allowed_values: [
-                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-                         16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                         30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
-                         44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-                         58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
-                         72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
-                         86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
-                    ],
-                    result: null,
-                    result_declared_at: null,
-               });
-
-               await newMarket.save();
-
-               return ApiResponse.success(res, {
-                    data: newMarket,
-                    message: 'Market created successfully',
-                    statusCode: 201,
-               });
-          } catch (error: any) {
+          // Validate input presence
+          if (!name || !active_hours || !code) {
                return ApiResponse.error(res, {
-                    error: 'Database Error',
-                    message: error.message,
+                    error: 'Validation Error',
+                    message: 'All fields (name, active_hours, code) are required.',
+                    statusCode: 400,
                });
           }
-     };
+
+          const { open, close } = active_hours;
+
+          // Validate time format HH:mm (24-hour)
+          const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+          if (!timeRegex.test(open) || !timeRegex.test(close)) {
+               return ApiResponse.error(res, {
+                    error: 'Validation Error',
+                    message: 'Time format must be HH:mm (e.g., "06:00", "21:00").',
+                    statusCode: 400,
+               });
+          }
+
+          // Convert to minutes since midnight
+          const [openH, openM] = open.split(':').map(Number);
+          const [closeH, closeM] = close.split(':').map(Number);
+          const openMinutes = openH * 60 + openM;
+          const closeMinutes = closeH * 60 + closeM;
+
+          if (closeMinutes <= openMinutes) {
+               return ApiResponse.error(res, {
+                    error: 'Validation Error',
+                    message: 'Closing time must be after opening time.',
+                    statusCode: 400,
+               });
+          }
+
+          // Calculate odds: 950 payout for 10 bet => 950 / 10 = 95
+          const odds = 95;
+
+          const newMarket = new MarketModel({
+               name,
+               code,
+               active_hours: {
+                    open,  // store as string "HH:mm"
+                    close, // store as string "HH:mm"
+               },
+               odds,
+               allowed_values: Array.from({ length: 100 }, (_, i) => i),
+               result: null,
+               result_declared_at: null,
+          });
+
+          await newMarket.save();
+
+          return ApiResponse.success(res, {
+               data: newMarket,
+               message: 'Market created successfully',
+               statusCode: 201,
+          });
+     } catch (error: any) {
+          return ApiResponse.error(res, {
+               error: 'Database Error',
+               message: error.message,
+          });
+     }
+};
+
 
      /**
       * get all the market

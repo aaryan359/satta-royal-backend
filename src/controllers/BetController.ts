@@ -4,112 +4,120 @@ import BetModel from "../models/Bet.model";
 import { Request, Response, NextFunction } from "express";
 import ApiResponse from "../utils/ApiResponse";
 import UserModel from "../models/User.model";
+import MarketModel from "../models/Market.model";
 
 
-class BetController {   
+class BetController {
     /**
      * Place a bet on a market
      */
     static placeBet = async (req: Request, res: Response, next: NextFunction) => {
         try {
-        const { market, number, amount, bet_time } = req.body;
-        const userId = req.user?._id;
-    
-        // Validate input
-        if (!market || !number || !amount || !bet_time) {
-            return ApiResponse.error(res, {
-                error: 'Validation Error',
-                message: 'Market, number, and amount are required.',
-                statusCode: 400
-            });
-        }
-
-        if (amount < 10) {
-            return ApiResponse.error(res, {
-                error: 'Validation Error',
-                message: 'Minimum bet amount is 10.',
-                statusCode: 400
-            });
-        }
-        // check the number is a valid integer and between 0 to 100
-        if (!Number.isInteger(number) || number < 0 || number > 100) {
-            return ApiResponse.error(res, {
-                error: 'Validation Error',
-                message: 'Number must be an integer between 0 and 100.',
-                statusCode: 400
-            });
-        }
+            console.log("req.body",req.body)
+            const { marketId } = req.body;
+            const amount = Number(req.body.amount);
+            const number = Number(req.body.number);
 
 
-        //check the user has enough balance to place the bet
-        const user = await UserModel.findById(userId);
-        if (!user) {
-            return ApiResponse.error(res, {
-                error: 'Authentication Error',
-                message: 'User not authenticated.',
-                statusCode: 401
-            });
-        }
-        if (user.balance < amount) {
-            return ApiResponse.error(res, {
-                error: 'Insufficient Balance',
-                message: 'You do not have enough balance to place this bet.',
-                statusCode: 400
-            });
-        }
+            const userId = req.user?._id;
 
-
-        // Deduct the bet amount from user's balance
-        user.balance -= amount;
-        await user.save();
-
-
-
-
-        // Create the bet
-        const bet = await BetModel.create({
-            user: userId,
-            market,
-            number,
-            amount,
-            bet_time,
-            status: 'pending'
-        });
-        if (!bet) {
-            return ApiResponse.error(res, {
-                error: 'Bet Creation Error',
-                message: 'Failed to create bet.',
-                statusCode: 500
-            });
-        }
-        // Log the bet creation
-        console.log(`Bet created successfully: ${bet._id} for user: ${userId}`);
-        
-        // Update user's bet history
-        if (user) {
-            if (!user.bet_history) {
-                user.bet_history = [];
+            // Validate input
+            if (!marketId || !number || !amount) {
+                return ApiResponse.error(res, {
+                    error: 'Validation Error',
+                    message: 'Market, number, and amount are required.',
+                    statusCode: 400
+                });
             }
-            user.bet_history.push(bet._id);
+
+            if (amount < 100) {
+                return ApiResponse.error(res, {
+                    error: 'Validation Error',
+                    message: 'Minimum bet amount is 10.',
+                    statusCode: 400
+                });
+            }
+            
+
+            if (!Number.isInteger(number) || number < 0 || number > 100) {
+                return ApiResponse.error(res, {
+                    error: 'Validation Error',
+                    message: 'Number must be an integer between 0 and 100.',
+                    statusCode: 400
+                });
+            }
+
+
+            const user = await UserModel.findById(userId);
+
+            if (!user) {
+                return ApiResponse.error(res, {
+                    error: 'Authentication Error',
+                    message: 'User not authenticated.',
+                    statusCode: 401
+                });
+            }
+
+            if (user.balance < amount) {
+                return ApiResponse.success(res, {
+                    data: 'Insufficient Balance',
+                    message: 'You do not have enough balance to place this bet.',
+                    statusCode: 301
+                });
+            }
+
+
+            user.balance -= amount;
             await user.save();
-        } else {
-            return ApiResponse.error(res, {
-                error: 'Authentication Error',
-                message: 'User not authenticated.',
-                statusCode: 401
+
+
+
+
+            // Create the bet
+            const bet = await BetModel.create({
+                user: userId,
+                number,
+                amount,
+                bet_placed_at: Date.now(),
+                status: 'pending'
             });
-        }
+
+            if (!bet) {
+                return ApiResponse.error(res, {
+                    error: 'Bet Creation Error',
+                    message: 'Failed to create bet.',
+                    statusCode: 500
+                });
+            }
+
+            // Log the bet creation
+            console.log(`Bet created successfully: ${bet._id} for user: ${userId}`);
+
+            // Update user's bet history
+            if (user) {
+                if (!user.bet_history) {
+                    user.bet_history = [];
+                }
+                user.bet_history.push(bet._id);
+                await user.save();
+            } else {
+                return ApiResponse.error(res, {
+                    error: 'Authentication Error',
+                    message: 'User not authenticated.',
+                    statusCode: 401
+                });
+            }
 
 
-        return ApiResponse.success(res, {
-            message: "Bet placed successfully",
-            data: {
-                bet
-            },
-            statusCode: 201
-        });
+            return ApiResponse.success(res, {
+                message: "Bet placed successfully",
+                data: {
+                    bet
+                },
+                statusCode: 201
+            });
         } catch (error) {
-        next(error);
+            next(error);
         }
     };
 
@@ -129,7 +137,7 @@ class BetController {
                     statusCode: 401
                 });
             }
-            
+
             const bets = await BetModel.find({ user: userId }).populate('user', 'username email');
 
             if (!bets || bets.length === 0) {
@@ -147,7 +155,7 @@ class BetController {
             });
         } catch (error) {
             next(error);
-        }   
+        }
     }
 
     /**

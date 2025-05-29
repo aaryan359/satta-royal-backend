@@ -9,8 +9,9 @@ const betSchema = new mongoose.Schema({
     required: true
   },
 
-  market: {
-    type: String,
+  marketId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Market',
     required: true
   },
 

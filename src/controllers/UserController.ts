@@ -208,6 +208,7 @@ const UserController = {
   /**
    * Submit KYC documents
    */
+  
   submitKYC: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { idNumber, idType, idFront, idBack } = req.body;
