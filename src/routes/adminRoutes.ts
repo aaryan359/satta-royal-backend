@@ -4,7 +4,7 @@ import AdminController from '../controllers/AdminController';
 
 const router = Router();
 
-router.post('/add/market', (req, res, next) => {
+router.post('/add/market',  (req, res, next) => {
   Promise.resolve(AdminController.addMarket(req, res, next)).catch(next);
 });
 router.post('/update-result', (req, res, next) => {

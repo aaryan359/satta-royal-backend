@@ -1,23 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
-
+import TransactionModel from '../models/Transaction.model';
 import UserModel from '../models/User.model';
 import ApiResponse from '../utils/ApiResponse';
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    _id: string;
-    username: string;
-    email: string;
-  };
-}
+
 
 class TransactionController {
   /**
    * Deposit money to user account
    */
   static depositMoney = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -48,6 +42,7 @@ class TransactionController {
 
       // Find user
       const user = await UserModel.findById(userId).session(session);
+
       if (!user) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -70,6 +65,7 @@ class TransactionController {
       // Check daily deposit limit
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+
       const todayDeposits = await TransactionModel.aggregate([
         {
           $match: {
@@ -87,6 +83,8 @@ class TransactionController {
         }
       ]).session(session);
 
+
+
       const todayDepositAmount = todayDeposits[0]?.totalAmount || 0;
       
       if (todayDepositAmount + amount > user.dailyDepositLimit) {
@@ -97,6 +95,7 @@ class TransactionController {
           statusCode: 400,
         });
       }
+
 
       // Create transaction record
       const transaction = new TransactionModel({
@@ -118,12 +117,15 @@ class TransactionController {
         processedAt: new Date()
       });
 
+
       await transaction.save({ session });
 
+      //update the user amount
+      user.balance += amount;
       // Add transaction to user's transaction history
       user.transactions.push(transaction._id);
-      await user.save({ session });
 
+      await user.save({ session });
       await session.commitTransaction();
 
       return ApiResponse.success(res, {
@@ -155,7 +157,7 @@ class TransactionController {
    * Withdraw money from user account
    */
   static withdrawMoney = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -253,7 +255,7 @@ class TransactionController {
 
       // Check if user has sufficient balance
       const requiredAmount = amount; // Fee is deducted from the amount, not added
-      if (user.availableBalance < requiredAmount) {
+      if ((user.availableBalance ?? 0) < requiredAmount) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
           error: 'Insufficient Balance',
@@ -325,7 +327,7 @@ class TransactionController {
    * Get recent transactions for the user
    */
   static getRecentTransactions = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -398,11 +400,13 @@ class TransactionController {
     }
   };
 
+
+
   /**
    * Get single transaction details
    */
   static getTransactionDetails = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -453,7 +457,7 @@ class TransactionController {
    * Cancel pending transaction
    */
   static cancelTransaction = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ) => {

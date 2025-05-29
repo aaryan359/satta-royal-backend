@@ -51,76 +51,78 @@ class AdminController {
      /**
       * add new market
       */
-   static addMarket = async (req: Request, res: Response, next: NextFunction) => {
-     try {
-          const { name, active_hours, code } = req.body;
-          console.log('req body is', req.body);
+     static addMarket = async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { name, active_hours, code } = req.body;
+               console.log('req body is', req.body);
 
-          // Validate input presence
-          if (!name || !active_hours || !code) {
+               // Validate input presence
+               if (!name || !active_hours || !code) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'All fields (name, active_hours, code) are required.',
+                         statusCode: 400,
+                    });
+               }
+
+               const { open, close } = active_hours;
+
+               // Validate time format HH:mm (24-hour)
+               const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+               if (!timeRegex.test(open) || !timeRegex.test(close)) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Time format must be HH:mm (e.g., "06:00", "21:00").',
+                         statusCode: 400,
+                    });
+               }
+
+               // Convert to minutes since midnight
+               const [openH, openM] = open.split(':').map(Number);
+               const [closeH, closeM] = close.split(':').map(Number);
+               const openMinutes = openH * 60 + openM;
+               const closeMinutes = closeH * 60 + closeM;
+
+               if (closeMinutes <= openMinutes) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Closing time must be after opening time.',
+                         statusCode: 400,
+                    });
+               }
+
+               // Calculate odds: 950 payout for 10 bet => 950 / 10 = 95
+               const odds = 95;
+
+               const newMarket = new MarketModel({
+                    name,
+                    code,
+                    active_hours: {
+                         open,  // store as string "HH:mm"
+                         close, // store as string "HH:mm"
+                    },
+                    odds,
+                    allowed_values: Array.from({ length: 100 }, (_, i) => i),
+                    result: null,
+                    result_declared_at: null,
+               });
+
+               await newMarket.save();
+
+               return ApiResponse.success(res, {
+                    data: newMarket,
+                    message: 'Market created successfully',
+                    statusCode: 201,
+               });
+          } catch (error: any) {
                return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'All fields (name, active_hours, code) are required.',
-                    statusCode: 400,
+                    error: 'Database Error',
+                    message: error.message,
                });
           }
 
-          const { open, close } = active_hours;
 
-          // Validate time format HH:mm (24-hour)
-          const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-          if (!timeRegex.test(open) || !timeRegex.test(close)) {
-               return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'Time format must be HH:mm (e.g., "06:00", "21:00").',
-                    statusCode: 400,
-               });
-          }
-
-          // Convert to minutes since midnight
-          const [openH, openM] = open.split(':').map(Number);
-          const [closeH, closeM] = close.split(':').map(Number);
-          const openMinutes = openH * 60 + openM;
-          const closeMinutes = closeH * 60 + closeM;
-
-          if (closeMinutes <= openMinutes) {
-               return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'Closing time must be after opening time.',
-                    statusCode: 400,
-               });
-          }
-
-          // Calculate odds: 950 payout for 10 bet => 950 / 10 = 95
-          const odds = 95;
-
-          const newMarket = new MarketModel({
-               name,
-               code,
-               active_hours: {
-                    open,  // store as string "HH:mm"
-                    close, // store as string "HH:mm"
-               },
-               odds,
-               allowed_values: Array.from({ length: 100 }, (_, i) => i),
-               result: null,
-               result_declared_at: null,
-          });
-
-          await newMarket.save();
-
-          return ApiResponse.success(res, {
-               data: newMarket,
-               message: 'Market created successfully',
-               statusCode: 201,
-          });
-     } catch (error: any) {
-          return ApiResponse.error(res, {
-               error: 'Database Error',
-               message: error.message,
-          });
-     }
-};
+     };
 
 
      /**
@@ -154,6 +156,14 @@ class AdminController {
 
           }
 
+
+     }
+
+     /**
+      *  find user with particular transaction
+     */
+
+     static findUser = async () => {
 
      }
 
