@@ -16,12 +16,14 @@ class TransactionController {
     next: NextFunction
   ) => {
     const session = await mongoose.startSession();
-    
+
     try {
       await session.startTransaction();
-      
+
       const { amount, paymentMethod, paymentGatewayRef, paymentDetails } = req.body;
       const userId = req.user?._id;
+
+      console.log("user data in the backend is", amount, paymentMethod, paymentGatewayRef, paymentDetails)
 
       // Validate input
       if (!amount || amount <= 0) {
@@ -86,7 +88,9 @@ class TransactionController {
 
 
       const todayDepositAmount = todayDeposits[0]?.totalAmount || 0;
-      
+      console.log(" today deposit is", todayDepositAmount);
+
+
       if (todayDepositAmount + amount > user.dailyDepositLimit) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -124,17 +128,18 @@ class TransactionController {
       user.balance += amount;
       // Add transaction to user's transaction history
       user.transactions.push(transaction._id);
+      console.log(" user balance is updayed", user.balance);
 
       await user.save({ session });
+      const userBalance = user.balance;
       await session.commitTransaction();
+      console.log(" user balance is updayed", user.balance);
+      console.log("transaction is completed", transaction);
+
 
       return ApiResponse.success(res, {
         data: {
-          transactionId: transaction._id,
-          amount: transaction.amount,
-          status: transaction.status,
-          paymentMethod: transaction.paymentMethod,
-          createdAt: transaction.createdAt
+          userBalance
         },
         message: 'Deposit request created successfully. Please complete the payment.',
         statusCode: 201,
@@ -162,10 +167,10 @@ class TransactionController {
     next: NextFunction
   ) => {
     const session = await mongoose.startSession();
-    
+
     try {
       await session.startTransaction();
-      
+
       const { amount, paymentMethod, paymentDetails } = req.body;
       const userId = req.user?._id;
 
@@ -237,7 +242,7 @@ class TransactionController {
       ]).session(session);
 
       const todayWithdrawalAmount = todayWithdrawals[0]?.totalAmount || 0;
-      
+
       if (todayWithdrawalAmount + amount > user.dailyWithdrawalLimit) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -453,6 +458,14 @@ class TransactionController {
     }
   };
 
+
+  /**
+     * get all the transactions 
+     */
+  static getAllTransaction = async (req: Request, res: Response, next: NextFunction) => {
+
+  };
+
   /**
    * Cancel pending transaction
    */
@@ -462,10 +475,10 @@ class TransactionController {
     next: NextFunction
   ) => {
     const session = await mongoose.startSession();
-    
+
     try {
       await session.startTransaction();
-      
+
       const { transactionId } = req.params;
       const userId = req.user?._id;
 

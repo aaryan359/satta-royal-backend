@@ -13,7 +13,7 @@ class BetController {
      */
     static placeBet = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            console.log("req.body",req.body)
+            console.log("req.body", req.body)
             const { marketId } = req.body;
             const amount = Number(req.body.amount);
             const number = Number(req.body.number);
@@ -37,7 +37,7 @@ class BetController {
                     statusCode: 400
                 });
             }
-            
+
 
             if (!Number.isInteger(number) || number < 0 || number > 100) {
                 return ApiResponse.error(res, {
@@ -66,10 +66,14 @@ class BetController {
                 });
             }
 
-
+            console.log(" user balance before placing bet ", user.balance);
             user.balance -= amount;
             await user.save();
 
+
+            console.log(" user balance after placing bet ", user.balance);
+            const userBalance = user.balance;
+            console.log(" user balance  ", userBalance);
 
 
 
@@ -78,6 +82,7 @@ class BetController {
                 user: userId,
                 number,
                 amount,
+                marketId,
                 bet_placed_at: Date.now(),
                 status: 'pending'
             });
@@ -112,7 +117,7 @@ class BetController {
             return ApiResponse.success(res, {
                 message: "Bet placed successfully",
                 data: {
-                    bet
+                    userBalance
                 },
                 statusCode: 201
             });
@@ -138,7 +143,12 @@ class BetController {
                 });
             }
 
-            const bets = await BetModel.find({ user: userId }).populate('user', 'username email');
+            const bets = await BetModel.find({ user: userId })
+                .populate('user', 'username email')
+                .populate('marketId');
+
+            console.log("evoluted bets is",bets);
+
 
             if (!bets || bets.length === 0) {
                 return ApiResponse.success(res, {

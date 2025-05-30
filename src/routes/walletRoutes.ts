@@ -7,7 +7,7 @@ router.post('/deposit',verifyUser, (req, res, next) => {
   Promise.resolve(TransactionController.depositMoney(req, res, next)).catch(next);
 })
 
-router.get('/getalltransaction',verifyUser, (req, res, next) => {
+router.get('/getrecenttransaction',verifyUser, (req, res, next) => {
   Promise.resolve(TransactionController.getRecentTransactions(req, res, next)).catch(next);
 })
 

@@ -53,7 +53,7 @@ const TransactionSchema = new mongoose.Schema<ITransaction>({
   // Payment method for deposits/withdrawals
   paymentMethod: {
     type: String,
-    enum: ['upi', 'bank_transfer', 'paytm', 'phonepe', 'googlepay', 'razorpay', 'cashfree'],
+    enum: ['upi', 'bank_transfer', 'paytm', 'phonepe', 'googlepay', 'razorpay', 'cashfree','QrCode'],
     sparse: true
   },
   
