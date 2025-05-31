@@ -147,7 +147,7 @@ class BetController {
                 .populate('user', 'username email')
                 .populate('marketId');
 
-            console.log("evoluted bets is",bets);
+           
 
 
             if (!bets || bets.length === 0) {

@@ -10,37 +10,37 @@ const marketSchema = new mongoose.Schema({
     },
 
     active_hours: {
-        open: { type: String, required: true }, 
-        close: { type: String, required: true } 
+        open: { type: String, required: true },
+        close: { type: String, required: true }
     },
 
-    code:{
-        type:String
+    code: {
+        type: String
     },
 
-    current_winning_value: { 
+    current_winning_value: {
         type: mongoose.Schema.Types.Mixed,
         default: null
     },
-    
+
     status: {
         type: String,
         enum: ['open', 'closed', 'result_declared'],
-        default: 'closed'
+        default: 'open'
     },
 
     odds: {
         type: Number,
-        required: true 
+        required: true
     },
 
     // dont know what type it is, so using Mixed
-    result: { 
-        type: mongoose.Schema.Types.Mixed,
-        default: null
-    },
+    result_history: [{
+        result: mongoose.Schema.Types.Mixed,
+        declared_at: { type: Date, default: Date.now }
+    }],
 
-    allowed_values: [{ 
+    allowed_values: [{
         type: mongoose.Schema.Types.Mixed,
         required: true
     }],
@@ -55,4 +55,3 @@ const marketSchema = new mongoose.Schema({
 
 const MarketModel = mongoose.model('Market', marketSchema);
 export default MarketModel;
-        

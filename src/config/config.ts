@@ -11,11 +11,11 @@ interface Config {
 }
 
 const config: Config = {
-  port: Number(process.env.PORT) || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
-  mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/',
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+  port: Number(process.env.PORT) ,
+  nodeEnv: process.env.NODE_ENV ?? (() => { throw new Error('NODE_ENV is not defined'); })(),
+  mongoUri: process.env.MONGODB_URI ?? (() => { throw new Error('MONGODB_URI is not defined'); })(),
+  jwtSecret: process.env.JWT_SECRET ?? (() => { throw new Error('JWT_SECRET is not defined'); })(),
+  corsOrigin: process.env.CORS_ORIGIN ?? (() => { throw new Error('cors is not defined'); })(),
 
 };
 
