@@ -10,7 +10,7 @@ process.on('uncaughtException', (err) => {
 });
 
 
-const server = app.listen(config.port, () => {
+const server = app.listen(config.port,'0.0.0.0', () => {
   logger.info(`Server running on port ${config.port}`);
 });
 
