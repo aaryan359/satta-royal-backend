@@ -162,8 +162,98 @@ class TransactionController {
 
 
   static depositBonus = async(
-    req:Request
+    req:Request,res:Response,next:NextFunction
   )=>{
+
+     const session = await mongoose.startSession();
+
+    try {
+      await session.startTransaction();
+
+      
+      const userId = req.user?._id;
+
+  
+     
+
+      // Find user
+      const user = await UserModel.findById(userId).session(session);
+
+      if (!user) {
+        await session.abortTransaction();
+        return ApiResponse.error(res, {
+          error: 'Not Found',
+          message: 'User not found',
+          statusCode: 404,
+        });
+      }
+
+      // Check if user is active and not suspended
+      if (!user.isActive || user.isSuspended) {
+        await session.abortTransaction();
+        return ApiResponse.error(res, {
+          error: 'Account Error',
+          message: 'Account is inactive or suspended',
+          statusCode: 403,
+        });
+      }
+
+      const amount = 50;
+
+    
+
+      // Create transaction record
+      const transaction = new TransactionModel({
+        user: userId,
+        type: 'bonus',
+        amount: amount,
+        balanceBefore: user.balance,
+        balanceAfter: user.balance + amount,
+        paymentMethod: 'cashfree',
+        paymentGatewayRef: "no needed",
+        paymentDetails: "bonus by admin",
+        status: 'completed', // by default completed
+        description: `Deposit via amdin for bonus`,
+        processedAt: new Date()
+      });
+
+
+      await transaction.save({ session });
+
+      //update the user amount
+      user.balance += amount;
+      // Add transaction to user's transaction history
+      user.transactions.push(transaction._id);
+      console.log(" user balance is updayed", user.balance);
+
+      await user.save({ session });
+      const userBalance = user.balance;
+      await session.commitTransaction();
+      console.log(" user balance is updayed", user.balance);
+      console.log("transaction is completed", transaction);
+
+
+      return ApiResponse.success(res, {
+        data: {
+          userBalance
+        },
+        message: 'Deposit request created successfully. Please complete the payment.',
+        statusCode: 201,
+      });
+
+    } catch (error: any) {
+      await session.abortTransaction();
+      console.error('Deposit Error:', error);
+      return ApiResponse.error(res, {
+        error: 'Database Error',
+        message: error.message,
+        statusCode: 500,
+      });
+    } finally {
+      session.endSession();
+    }
+
+
 
   }
   
