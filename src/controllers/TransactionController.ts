@@ -15,6 +15,8 @@ class TransactionController {
     res: Response,
     next: NextFunction
   ) => {
+
+    // for atomic transaction
     const session = await mongoose.startSession();
 
     try {
@@ -88,7 +90,7 @@ class TransactionController {
 
 
       const todayDepositAmount = todayDeposits[0]?.totalAmount || 0;
-      console.log(" today deposit is", todayDepositAmount);
+      
 
 
       if (todayDepositAmount + amount > user.dailyDepositLimit) {
@@ -158,6 +160,13 @@ class TransactionController {
     }
   };
 
+
+  static depositBonus = async(
+    req:Request
+  )=>{
+
+  }
+  
   /**
    * Withdraw money from user account
    */
