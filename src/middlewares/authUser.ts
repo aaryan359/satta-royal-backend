@@ -25,6 +25,8 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
 
     // 1. Get token and check if it exists
     const token = req.headers.authorization;
+    console.log(" token form frontend",token);
+
 
     if (!token) {
       return next(new AppError("You are not logged in! Please log in to get access.", 401));
@@ -32,6 +34,8 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
 
     // 2. Verify token
     const decoded = verifyToken(token);
+    console.log(" decoded token is",decoded);
+    
     if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) {
       return next(new AppError("Invalid token! Please log in again.", 401));
     }

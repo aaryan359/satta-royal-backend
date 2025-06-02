@@ -90,7 +90,7 @@ class TransactionController {
 
 
       const todayDepositAmount = todayDeposits[0]?.totalAmount || 0;
-      
+
 
 
       if (todayDepositAmount + amount > user.dailyDepositLimit) {
@@ -161,20 +161,17 @@ class TransactionController {
   };
 
 
-  static depositBonus = async(
-    req:Request,res:Response,next:NextFunction
-  )=>{
+  static depositBonus = async (
+    req: Request, res: Response, next: NextFunction
+  ) => {
 
-     const session = await mongoose.startSession();
+    const session = await mongoose.startSession();
 
     try {
       await session.startTransaction();
 
-      
-      const userId = req.user?._id;
 
-  
-     
+      const userId = req.user?._id;
 
       // Find user
       const user = await UserModel.findById(userId).session(session);
@@ -200,7 +197,7 @@ class TransactionController {
 
       const amount = 50;
 
-    
+
 
       // Create transaction record
       const transaction = new TransactionModel({
@@ -212,7 +209,7 @@ class TransactionController {
         paymentMethod: 'cashfree',
         paymentGatewayRef: "no needed",
         paymentDetails: "bonus by admin",
-        status: 'completed', // by default completed
+        status: 'completed', 
         description: `Deposit via amdin for bonus`,
         processedAt: new Date()
       });
@@ -256,7 +253,8 @@ class TransactionController {
 
 
   }
-  
+
+
   /**
    * Withdraw money from user account
    */
@@ -503,7 +501,6 @@ class TransactionController {
       });
     }
   };
-
 
 
   /**

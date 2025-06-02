@@ -25,12 +25,10 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   password: {
     type: String,
-    required: true,
     minlength: 8
   },
   phone: {
     type: String,
-    required: true,
     unique: true,
     validate: {
       validator: (v: string) => /^\+?[1-9]\d{9,14}$/.test(v),
@@ -41,70 +39,83 @@ const UserSchema = new mongoose.Schema<IUser>({
   // Main wallet balance
   balance: {
     type: Number,
-    required: true,
-    default: 0,
+    default:0,
     min: 0
   },
+
+
   // Bonus balance (separate from main balance)
   bonusBalance: {
     type: Number,
     default: 0,
     min: 0
   },
+
   // Locked balance (pending withdrawals)
   lockedBalance: {
     type: Number,
     default: 0,
     min: 0
   },
+
   // Total deposits till date
   totalDeposits: {
     type: Number,
     default: 0,
     min: 0
   },
+
+
   // Total withdrawals till date
   totalWithdrawals: {
     type: Number,
     default: 0,
     min: 0
   },
+
   // Daily deposit limit
   dailyDepositLimit: {
     type: Number,
     default: 100000, // Default 1 lakh
     min: 0
   },
+
   // Daily withdrawal limit
   dailyWithdrawalLimit: {
     type: Number,
     default: 50000, // Default 50k
     min: 0
   },
+
   referralCode: {
     type: String,
     unique: true,
     sparse: true
   },
+
   // Who referred this user
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     sparse: true
   },
+  
   // Users referred by this user
   referrals: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+
   bet_history: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Bet'
   }],
+
   transactions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Transaction'
   }],
+
   // KYC Information
   kycStatus: {
     type: String,
@@ -112,6 +123,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     enum: ['pending', 'submitted', 'under_review', 'approved', 'rejected'],
     default: 'pending'
   },
+  
   kycDocuments: {
     aadhar: {
       number: String,

@@ -1,9 +1,8 @@
 // function to generate JWT token
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { ObjectId } from "mongoose";
 dotenv.config();
-import { IUser } from "../types/User";
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

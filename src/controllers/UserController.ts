@@ -4,14 +4,15 @@ import { IUser } from '../types/User';
 import logger from '../config/logger';
 import ApiResponse from '../utils/ApiResponse';
 import { generateToken } from '../utils/genrate-jwt';
-
+import config from '../config/config';
+import { OAuth2Client } from 'google-auth-library';
 
 
 const UserController = {
   /**
    * Register a new user
    */
-  register: async (req: Request, res: Response, next: NextFunction) =>{
+  register: async (req: Request, res: Response, next: NextFunction) => {
 
     try {
       const { username, email, password, phone } = req.body;
@@ -150,7 +151,7 @@ const UserController = {
       next(error);
     }
   },
-  
+
 
   /**
    * Update user profile
@@ -203,12 +204,10 @@ const UserController = {
     }
   },
 
-
-
   /**
    * Submit KYC documents
    */
-  
+
   submitKYC: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { idNumber, idType, idFront, idBack } = req.body;
@@ -269,7 +268,7 @@ const UserController = {
   getBalance: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = await UserModel.findById(req.user?._id).select('balance');
-      
+
       if (!user) {
         return ApiResponse.error(res, {
           error: 'User not found',
@@ -288,8 +287,82 @@ const UserController = {
     }
   },
 
-  
+  Oauth: async (req: Request, res: Response, next: NextFunction) => {
 
+    const client = new OAuth2Client(config.google_client_id);
+    console.log('req body', req.body);
+
+    const { token, user } = req.body;
+
+    console.log('token and mail is', token, user);
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: config.google_client_id,
+      });
+
+
+      const payload = ticket.getPayload();
+      console.log('payload from google is', payload)
+
+      // Check email match
+      if (payload?.email !== user.email) {
+        return res.status(401).json({ error: 'Email mismatch' });
+      }
+
+
+      const email = payload?.email;
+      const username = payload?.name;
+
+
+      const dbUser = await UserModel.findOne({ email });
+
+      // if user already registered
+      if (dbUser) {
+   
+        const token = generateToken(dbUser._id);
+
+        return ApiResponse.success(res, {
+          message: 'User logged in successfully',
+          data: {
+            dbUser,
+            token
+          },
+          statusCode: 200
+        });
+      }
+
+      // if fresh user came
+      // Create new user
+      if (!dbUser) {
+        const newUser = await UserModel.create({
+          email,
+          username
+        });
+
+        // Generate JWT token
+        const token = generateToken(newUser._id);
+
+        console.log(`Generated token: ${token}`);
+
+        return ApiResponse.success(res, {
+          message: 'User registered successfully',
+          data: {
+            user: newUser,
+            token
+          },
+          statusCode: 201
+        })
+      }
+
+    } catch (err) {
+      ApiResponse.error(res, {
+        error: 'Invalid ID token',
+        statusCode: 401
+      })
+    }
+  }
 
 }
 
