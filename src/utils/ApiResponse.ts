@@ -8,7 +8,7 @@ class ApiResponse {
     /**
      * Send success response
      */
-    static success(res: Response, options: {
+static success(res: Response, options: {
         data?: any;
         message?: string;
         statusCode?: number;
