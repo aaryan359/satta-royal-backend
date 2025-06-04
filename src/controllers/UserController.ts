@@ -314,6 +314,7 @@ const UserController = {
 
       const email = payload?.email;
       const username = payload?.name;
+      const profile = payload?.profile
 
 
       const dbUser = await UserModel.findOne({ email });
@@ -338,7 +339,8 @@ const UserController = {
       if (!dbUser) {
         const newUser = await UserModel.create({
           email,
-          username
+          username,
+          profilePicture:profile,
         });
 
         // Generate JWT token

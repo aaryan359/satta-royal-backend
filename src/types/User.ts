@@ -6,6 +6,7 @@ export interface IUser {
   email: string;
   password: string;
   phone: string;
+  profilePicture:string;
   balance: number;
   bonusBalance: number;
   lockedBalance: number;

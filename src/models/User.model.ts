@@ -35,6 +35,9 @@ const UserSchema = new mongoose.Schema<IUser>({
       message: 'Invalid phone number format'
     }
   },
+  profilePicture:{
+    type:String
+  },
   
   // Main wallet balance
   balance: {
