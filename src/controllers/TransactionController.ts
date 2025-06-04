@@ -6,6 +6,13 @@ import ApiResponse from '../utils/ApiResponse';
 
 
 
+
+function canWithdraw(user: any, amount: any) {
+  const balanceLeft = user.balance - amount;
+  return balanceLeft >= user.bonusBalance;
+}
+
+
 class TransactionController {
   /**
    * Deposit money to user account
@@ -209,7 +216,7 @@ class TransactionController {
         paymentMethod: 'cashfree',
         paymentGatewayRef: "no needed",
         paymentDetails: "bonus by admin",
-        status: 'completed', 
+        status: 'completed',
         description: `Deposit via amdin for bonus`,
         processedAt: new Date()
       });
@@ -290,6 +297,7 @@ class TransactionController {
 
       // Find user
       const user = await UserModel.findById(userId).session(session);
+
       if (!user) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -309,14 +317,7 @@ class TransactionController {
         });
       }
 
-      if (user.kycStatus !== 'approved') {
-        await session.abortTransaction();
-        return ApiResponse.error(res, {
-          error: 'KYC Error',
-          message: 'KYC verification required for withdrawals',
-          statusCode: 403,
-        });
-      }
+
 
       // Check daily withdrawal limit
       const today = new Date();
@@ -338,7 +339,9 @@ class TransactionController {
         }
       ]).session(session);
 
+
       const todayWithdrawalAmount = todayWithdrawals[0]?.totalAmount || 0;
+
 
       if (todayWithdrawalAmount + amount > user.dailyWithdrawalLimit) {
         await session.abortTransaction();
@@ -349,14 +352,20 @@ class TransactionController {
         });
       }
 
+      if (!canWithdraw(user, todayWithdrawalAmount)) {
+        return res.status(400).json({ error: "You cannot withdraw bonus amount" });
+      }
+
+
       // Calculate withdrawal fee (2% or minimum ₹10)
       const feePercent = 0.02; // 2%
       const minimumFee = 10;
       const calculatedFee = Math.max(amount * feePercent, minimumFee);
-      const fee = Math.min(calculatedFee, 100); // Maximum fee ₹100
+      const fee = Math.min(calculatedFee, 100);
+
 
       // Check if user has sufficient balance
-      const requiredAmount = amount; // Fee is deducted from the amount, not added
+      const requiredAmount = amount;
       if ((user.availableBalance ?? 0) < requiredAmount) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -366,10 +375,13 @@ class TransactionController {
         });
       }
 
+
+
       // Lock the withdrawal amount
       user.lockedBalance += requiredAmount;
       user.balance -= requiredAmount;
 
+      
       // Create transaction record
       const transaction = new TransactionModel({
         user: userId,
