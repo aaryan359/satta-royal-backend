@@ -26,11 +26,13 @@ const verifyUser = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     try {
         // 1. Get token and check if it exists
         const token = req.headers.authorization;
+        console.log(" token form frontend", token);
         if (!token) {
             return next(new AppError_1.default("You are not logged in! Please log in to get access.", 401));
         }
         // 2. Verify token
         const decoded = (0, verifyToken_1.verifyToken)(token);
+        console.log(" decoded token is", decoded);
         if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) {
             return next(new AppError_1.default("Invalid token! Please log in again.", 401));
         }

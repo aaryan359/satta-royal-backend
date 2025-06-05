@@ -37,22 +37,22 @@ const UserSchema = new mongoose_1.default.Schema({
     },
     password: {
         type: String,
-        required: true,
         minlength: 8
     },
     phone: {
         type: String,
-        required: true,
         unique: true,
         validate: {
             validator: (v) => /^\+?[1-9]\d{9,14}$/.test(v),
             message: 'Invalid phone number format'
         }
     },
+    profilePicture: {
+        type: String
+    },
     // Main wallet balance
     balance: {
         type: Number,
-        required: true,
         default: 0,
         min: 0
     },

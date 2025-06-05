@@ -192,7 +192,7 @@ class TransactionController {
         });
       }
 
-      // Check if user is active and not suspended
+    // Check if user is active and not suspended
       if (!user.isActive || user.isSuspended) {
         await session.abortTransaction();
         return ApiResponse.error(res, {
@@ -202,7 +202,7 @@ class TransactionController {
         });
       }
 
-      const amount = 50;
+      const amount = 100;
 
 
 
@@ -381,7 +381,7 @@ class TransactionController {
       user.lockedBalance += requiredAmount;
       user.balance -= requiredAmount;
 
-      
+
       // Create transaction record
       const transaction = new TransactionModel({
         user: userId,

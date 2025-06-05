@@ -10,6 +10,12 @@ const router = (0, express_1.Router)();
 router.post('/deposit', authUser_1.verifyUser, (req, res, next) => {
     Promise.resolve(TransactionController_1.default.depositMoney(req, res, next)).catch(next);
 });
+router.post('/bonus', authUser_1.verifyUser, (req, res, next) => {
+    Promise.resolve(TransactionController_1.default.depositBonus(req, res, next)).catch(next);
+});
+router.post('/withdraw', authUser_1.verifyUser, (req, res, next) => {
+    Promise.resolve(TransactionController_1.default.withdrawMoney(req, res, next)).catch(next);
+});
 router.get('/getrecenttransaction', authUser_1.verifyUser, (req, res, next) => {
     Promise.resolve(TransactionController_1.default.getRecentTransactions(req, res, next)).catch(next);
 });

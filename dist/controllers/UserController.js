@@ -16,6 +16,8 @@ const User_model_1 = __importDefault(require("../models/User.model"));
 const logger_1 = __importDefault(require("../config/logger"));
 const ApiResponse_1 = __importDefault(require("../utils/ApiResponse"));
 const genrate_jwt_1 = require("../utils/genrate-jwt");
+const config_1 = __importDefault(require("../config/config"));
+const google_auth_library_1 = require("google-auth-library");
 const UserController = {
     /**
      * Register a new user
@@ -236,5 +238,65 @@ const UserController = {
             next(error);
         }
     }),
+    Oauth: (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        const client = new google_auth_library_1.OAuth2Client(config_1.default.google_client_id);
+        console.log('req body', req.body);
+        const { token, user } = req.body;
+        console.log('token and mail is', token, user);
+        try {
+            const ticket = yield client.verifyIdToken({
+                idToken: token,
+                audience: config_1.default.google_client_id,
+            });
+            const payload = ticket.getPayload();
+            console.log('payload from google is', payload);
+            // Check email match
+            if ((payload === null || payload === void 0 ? void 0 : payload.email) !== user.email) {
+                return res.status(401).json({ error: 'Email mismatch' });
+            }
+            const email = payload === null || payload === void 0 ? void 0 : payload.email;
+            const username = payload === null || payload === void 0 ? void 0 : payload.name;
+            const profile = payload === null || payload === void 0 ? void 0 : payload.profile;
+            const dbUser = yield User_model_1.default.findOne({ email });
+            // if user already registered
+            if (dbUser) {
+                const token = (0, genrate_jwt_1.generateToken)(dbUser._id);
+                return ApiResponse_1.default.success(res, {
+                    message: 'User logged in successfully',
+                    data: {
+                        dbUser,
+                        token
+                    },
+                    statusCode: 200
+                });
+            }
+            // if fresh user came
+            // Create new user
+            if (!dbUser) {
+                const newUser = yield User_model_1.default.create({
+                    email,
+                    username,
+                    profilePicture: profile,
+                });
+                // Generate JWT token
+                const token = (0, genrate_jwt_1.generateToken)(newUser._id);
+                console.log(`Generated token: ${token}`);
+                return ApiResponse_1.default.success(res, {
+                    message: 'User registered successfully',
+                    data: {
+                        user: newUser,
+                        token
+                    },
+                    statusCode: 201
+                });
+            }
+        }
+        catch (err) {
+            ApiResponse_1.default.error(res, {
+                error: 'Invalid ID token',
+                statusCode: 401
+            });
+        }
+    })
 };
 exports.default = UserController;

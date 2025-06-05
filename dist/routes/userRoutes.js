@@ -21,6 +21,7 @@ const router = express_1.default.Router();
 //public routes
 router.post('/register', UserController_1.default.register);
 router.post('/login', UserController_1.default.login);
+router.post('/google-login', UserController_1.default.Oauth);
 // router.post('/forgot-password', UserController.forgotPassword as express.RequestHandler);
 // router.post('/reset-password', UserController.resetPassword as express.RequestHandler);
 // for checking that user is authenticated or not
