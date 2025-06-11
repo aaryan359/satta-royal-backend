@@ -316,7 +316,6 @@ const UserController = {
       const username = payload?.name;
       const profile = payload?.profile
 
-
       const dbUser = await UserModel.findOne({ email });
 
       // if user already registered
