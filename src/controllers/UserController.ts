@@ -43,9 +43,6 @@ const UserController = {
       }
 
 
-
-
-
       // Create new user
       const newUser = await UserModel.create({
         username,

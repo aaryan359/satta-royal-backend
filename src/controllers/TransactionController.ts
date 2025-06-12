@@ -13,6 +13,15 @@ function canWithdraw(user: any, amount: any) {
 }
 
 
+function isValidUpiReferenceNumber(referenceNumber:string) {
+  if (typeof referenceNumber !== 'string') {
+    return false;
+  }
+  const regex = /^\d{12}$/;
+  return regex.test(referenceNumber);
+}
+
+
 class TransactionController {
   /**
    * Deposit money to user account
@@ -43,6 +52,7 @@ class TransactionController {
         });
       }
 
+
       if (!paymentMethod) {
         return ApiResponse.error(res, {
           error: 'Validation Error',
@@ -50,6 +60,16 @@ class TransactionController {
           statusCode: 400,
         });
       }
+
+      
+      if (!isValidUpiReferenceNumber(paymentGatewayRef)) {
+        return ApiResponse.error(res, {
+          error: 'Transaction Failed',
+          message: 'Enter a valid UTR number ',
+          statusCode: 400,
+        });
+      }
+
 
       // Find user
       const user = await UserModel.findById(userId).session(session);
@@ -62,7 +82,7 @@ class TransactionController {
           statusCode: 404,
         });
       }
-
+      
       // Check if user is active and not suspended
       if (!user.isActive || user.isSuspended) {
         await session.abortTransaction();
