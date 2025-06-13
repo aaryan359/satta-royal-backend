@@ -35,14 +35,14 @@ const UserSchema = new mongoose.Schema<IUser>({
       message: 'Invalid phone number format'
     }
   },
-  profilePicture:{
-    type:String
+  profilePicture: {
+    type: String
   },
-  
+
   // Main wallet balance
   balance: {
     type: Number,
-    default:0,
+    default: 0,
     min: 0
   },
 
@@ -102,7 +102,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     ref: 'User',
     sparse: true
   },
-  
+
   // Users referred by this user
   referrals: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -126,7 +126,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     enum: ['pending', 'submitted', 'under_review', 'approved', 'rejected'],
     default: 'pending'
   },
-  
+
   kycDocuments: {
     aadhar: {
       number: String,
@@ -138,12 +138,22 @@ const UserSchema = new mongoose.Schema<IUser>({
       image: String
     },
     bankAccount: {
-      accountNumber: String,
-      ifscCode: String,
       bankName: String,
       accountHolderName: String,
+      accountNumber: String,
+      ifscCode: String,
+      branchAddress: String,
       passBookImage: String
     }
+  },
+
+  bankAccount: {
+    bankName: String,
+    accountHolderName: String,
+    accountNumber: String,
+    ifscCode: String,
+    branchAddress: String,
+    passBookImage: String
   },
   // Security and Status
   isActive: {

@@ -36,6 +36,7 @@ router.get('/profile', verifyUser, UserController.getMe as express.RequestHandle
 router.patch('/update-profile', verifyUser, UserController.updateMe as express.RequestHandler);
 router.delete('/delete-profile', verifyUser, UserController.deleteMe as express.RequestHandler);
 router.patch('/balance', verifyUser, UserController.getBalance as express.RequestHandler);
+router.post('/addbank', verifyUser, UserController.addBank as express.RequestHandler);
 
 
 

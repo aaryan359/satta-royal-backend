@@ -6,365 +6,429 @@ import ApiResponse from '../utils/ApiResponse';
 import { generateToken } from '../utils/genrate-jwt';
 import config from '../config/config';
 import { OAuth2Client } from 'google-auth-library';
-
+import mongoose from 'mongoose';
+import { validateIFSC } from '../utils/validations';
 
 const UserController = {
-  /**
-   * Register a new user
-   */
-  register: async (req: Request, res: Response, next: NextFunction) => {
+     /**
+      * Register a new user
+      */
+     register: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { username, email, password, phone } = req.body;
 
-    try {
-      const { username, email, password, phone } = req.body;
+               console.log(
+                    `Registering user with email: ${email}, username: ${username}`,
+               );
+               console.log(`Request body: ${JSON.stringify(req.body)}`);
 
+               // Check if username, email, and password are provided
+               if (!username || !email || !password) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Please provide username, email, and password',
+                         statusCode: 400,
+                    });
+               }
 
-      console.log(`Registering user with email: ${email}, username: ${username}`);
-      console.log(`Request body: ${JSON.stringify(req.body)}`);
+               // Check if user already exists
+               const existingUser = await UserModel.findOne({
+                    $or: [{ email }, { username }],
+               });
 
+               if (existingUser) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Email or username already in use',
+                         statusCode: 400,
+                    });
+               }
 
-      // Check if username, email, and password are provided
-      if (!username || !email || !password) {
-        return ApiResponse.error(res, {
-          error: 'Validation Error',
-          message: 'Please provide username, email, and password',
-          statusCode: 400
-        });
-      }
+               // Create new user
+               const newUser = await UserModel.create({
+                    username,
+                    email,
+                    password,
+                    phone,
+               });
 
-      // Check if user already exists
-      const existingUser = await UserModel.findOne({ $or: [{ email }, { username }] });
+               // Generate JWT token
+               const token = generateToken(newUser._id);
 
-      if (existingUser) {
-        return ApiResponse.error(res, {
-          error: 'Validation Error',
-          message: 'Email or username already in use',
-          statusCode: 400
-        });
-      }
+               console.log(`Generated token: ${token}`);
 
-
-      // Create new user
-      const newUser = await UserModel.create({
-        username,
-        email,
-        password,
-        phone
-      });
-
-
-      // Generate JWT token
-      const token = generateToken(newUser._id);
-
-      console.log(`Generated token: ${token}`);
-
-      return ApiResponse.success(res, {
-        message: 'User registered successfully',
-        data: {
-          user: newUser,
-          token
-        },
-        statusCode: 201
-      })
-
-    } catch (error: any) {
-      console.log(`Registration error: ${error.message}`);
-      next(error);
-    }
-  },
-
-
-
-  /**
-   * Login user
-   */
-  login: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-
-      const { email, password } = req.body;
-
-
-      if (!email || !password) {
-        return ApiResponse.error(res, {
-          error: 'Validation Error',
-          message: 'Please provide email and password',
-          statusCode: 400
-        });
-      }
-
-      const user = await UserModel.findOne({ email });
-
-      if (!user) {
-        return ApiResponse.error(res, {
-          error: ' User not found',
-          message: 'User not found',
-          statusCode: 401
-        });
-      }
-
-
-      const token = generateToken(user._id);
-
-
-      return ApiResponse.success(res, {
-        message: 'User logged in successfully',
-        data: {
-          user,
-          token
-        },
-        statusCode: 200
-      });
-
-
-    } catch (error: any) {
-      logger.error(`Login error: ${error.message}`);
-      next(error);
-    }
-  },
-
-  /**
-   * Get current user profile
-   */
-  getMe: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-
-      const user = await UserModel.findById(req.user?._id);
-
-      if (!user) {
-        return ApiResponse.error(res, {
-          error: 'User not found',
-          message: 'No user found with this ID',
-          statusCode: 404
-        });
-      }
-
-      return ApiResponse.success(res, {
-        message: 'User profile retrieved successfully',
-        data: user,
-        statusCode: 200
-      });
-
-    } catch (error: any) {
-      logger.error(`Get profile error: ${error.message}`);
-      next(error);
-    }
-  },
-
-
-  /**
-   * Update user profile
-   */
-  updateMe: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Filter out unwanted fields
-      const filteredBody: Partial<IUser> = {};
-      const allowedFields = ['username', 'email', 'avatar'];
-
-      Object.keys(req.body).forEach(key => {
-        if (allowedFields.includes(key)) {
-          filteredBody[key as keyof IUser] = req.body[key];
-        }
-      });
-
-      const updatedUser = await UserModel.findByIdAndUpdate(
-        req.user?._id,
-        filteredBody,
-        { new: true, runValidators: true }
-      );
-
-      return ApiResponse.success(res, {
-        message: 'User profile updated successfully',
-        data: updatedUser,
-        statusCode: 200
-      });
-
-    } catch (error: any) {
-      logger.error(`Update profile error: ${error.message}`);
-      next(error);
-    }
-  },
-
-  /**
-   * Delete user account
-   */
-  deleteMe: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await UserModel.findByIdAndUpdate(req.user?._id, { active: false });
-
-      return ApiResponse.success(res, {
-        message: 'User account deleted successfully',
-        statusCode: 200
-      });
-
-    } catch (error: any) {
-      logger.error(`Delete account error: ${error.message}`);
-      next(error);
-    }
-  },
-
-  /**
-   * Submit KYC documents
-   */
-
-  submitKYC: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { idNumber, idType, idFront, idBack } = req.body;
-
-      const updatedUser = await UserModel.findByIdAndUpdate(
-        req.user?._id,
-        {
-          kycStatus: 'pending',
-          kycDocuments: {
-            idNumber,
-            idType,
-            idFront,
-            idBack
+               return ApiResponse.success(res, {
+                    message: 'User registered successfully',
+                    data: {
+                         user: newUser,
+                         token,
+                    },
+                    statusCode: 201,
+               });
+          } catch (error: any) {
+               console.log(`Registration error: ${error.message}`);
+               next(error);
           }
-        },
-        { new: true }
-      );
+     },
 
-      return ApiResponse.success(res, {
-        message: 'KYC documents submitted successfully',
-        data: updatedUser,
-        statusCode: 200
-      });
+     /**
+      * Login user
+      */
+     login: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { email, password } = req.body;
 
-    } catch (error: any) {
-      logger.error(`KYC submission error: ${error.message}`);
-      next(error);
-    }
-  },
+               if (!email || !password) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Please provide email and password',
+                         statusCode: 400,
+                    });
+               }
 
-  /**
-   * Update user balance (for admin only)
-   */
+               const user = await UserModel.findOne({ email });
 
-  updateBalance: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { userId, amount } = req.body;
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: ' User not found',
+                         message: 'User not found',
+                         statusCode: 401,
+                    });
+               }
 
-      const user = await UserModel.findByIdAndUpdate(
-        userId,
-        { $inc: { balance: amount } },
-        { new: true }
-      );
+               const token = generateToken(user._id);
 
-      return ApiResponse.success(res, {
-        message: 'Balance updated successfully',
-        data: user,
-        statusCode: 200
-      });
+               return ApiResponse.success(res, {
+                    message: 'User logged in successfully',
+                    data: {
+                         user,
+                         token,
+                    },
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`Login error: ${error.message}`);
+               next(error);
+          }
+     },
 
-    } catch (error: any) {
-      logger.error(`Balance update error: ${error.message}`);
-      next(error);
-    }
-  },
+     /**
+      * Get current user profile
+      */
+     getMe: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const user = await UserModel.findById(req.user?._id);
 
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: 'User not found',
+                         message: 'No user found with this ID',
+                         statusCode: 404,
+                    });
+               }
 
-  getBalance: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = await UserModel.findById(req.user?._id).select('balance');
+               return ApiResponse.success(res, {
+                    message: 'User profile retrieved successfully',
+                    data: user,
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`Get profile error: ${error.message}`);
+               next(error);
+          }
+     },
 
-      if (!user) {
-        return ApiResponse.error(res, {
-          error: 'User not found',
-          message: 'No user found with this ID',
-          statusCode: 404
-        });
-      }
+     /**
+      * Update user profile
+      */
+     updateMe: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               // Filter out unwanted fields
+               const filteredBody: Partial<IUser> = {};
+               const allowedFields = ['username', 'email', 'avatar'];
 
-      return ApiResponse.success(res, {
-        message: 'Balance retrieved successfully',
-        data: { balance: user.balance }
-      });
-    } catch (error: any) {
-      logger.error(`Get balance error: ${error.message}`);
-      next(error);
-    }
-  },
+               Object.keys(req.body).forEach((key) => {
+                    if (allowedFields.includes(key)) {
+                         filteredBody[key as keyof IUser] = req.body[key];
+                    }
+               });
 
-  Oauth: async (req: Request, res: Response, next: NextFunction) => {
+               const updatedUser = await UserModel.findByIdAndUpdate(
+                    req.user?._id,
+                    filteredBody,
+                    { new: true, runValidators: true },
+               );
 
-    const client = new OAuth2Client(config.google_client_id);
-    console.log('req body', req.body);
+               return ApiResponse.success(res, {
+                    message: 'User profile updated successfully',
+                    data: updatedUser,
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`Update profile error: ${error.message}`);
+               next(error);
+          }
+     },
 
-    const { token, user } = req.body;
+     /**
+      * Delete user account
+      */
+     deleteMe: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               await UserModel.findByIdAndUpdate(req.user?._id, {
+                    active: false,
+               });
 
-    console.log('token and mail is', token, user);
+               return ApiResponse.success(res, {
+                    message: 'User account deleted successfully',
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`Delete account error: ${error.message}`);
+               next(error);
+          }
+     },
 
-    try {
-      const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: config.google_client_id,
-      });
+     /**
+      * Submit KYC documents
+      */
 
+     submitKYC: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { idNumber, idType, idFront, idBack } = req.body;
 
-      const payload = ticket.getPayload();
-      console.log('payload from google is', payload)
+               const updatedUser = await UserModel.findByIdAndUpdate(
+                    req.user?._id,
+                    {
+                         kycStatus: 'pending',
+                         kycDocuments: {
+                              idNumber,
+                              idType,
+                              idFront,
+                              idBack,
+                         },
+                    },
+                    { new: true },
+               );
 
-      // Check email match
-      if (payload?.email !== user.email) {
-        return res.status(401).json({ error: 'Email mismatch' });
-      }
+               return ApiResponse.success(res, {
+                    message: 'KYC documents submitted successfully',
+                    data: updatedUser,
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`KYC submission error: ${error.message}`);
+               next(error);
+          }
+     },
 
+     /**
+      * Update user balance (for admin only)
+      */
 
-      const email = payload?.email;
-      const username = payload?.name;
-      const profile = payload?.profile
+     updateBalance: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { userId, amount } = req.body;
 
-      const dbUser = await UserModel.findOne({ email });
+               const user = await UserModel.findByIdAndUpdate(
+                    userId,
+                    { $inc: { balance: amount } },
+                    { new: true },
+               );
 
-      // if user already registered
-      if (dbUser) {
-   
-        const token = generateToken(dbUser._id);
+               return ApiResponse.success(res, {
+                    message: 'Balance updated successfully',
+                    data: user,
+                    statusCode: 200,
+               });
+          } catch (error: any) {
+               logger.error(`Balance update error: ${error.message}`);
+               next(error);
+          }
+     },
 
-        return ApiResponse.success(res, {
-          message: 'User logged in successfully',
-          data: {
-            dbUser,
-            token
-          },
-          statusCode: 200
-        });
-      }
+     getBalance: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const user = await UserModel.findById(req.user?._id).select(
+                    'balance',
+               );
 
-      // if fresh user came
-      // Create new user
-      if (!dbUser) {
-        const newUser = await UserModel.create({
-          email,
-          username,
-          profilePicture:profile,
-        });
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: 'User not found',
+                         message: 'No user found with this ID',
+                         statusCode: 404,
+                    });
+               }
 
-        // Generate JWT token
-        const token = generateToken(newUser._id);
+               return ApiResponse.success(res, {
+                    message: 'Balance retrieved successfully',
+                    data: { balance: user.balance },
+               });
+          } catch (error: any) {
+               logger.error(`Get balance error: ${error.message}`);
+               next(error);
+          }
+     },
 
-        console.log(`Generated token: ${token}`);
+     Oauth: async (req: Request, res: Response, next: NextFunction) => {
+          const client = new OAuth2Client(config.google_client_id);
+          console.log('req body', req.body);
 
-        return ApiResponse.success(res, {
-          message: 'User registered successfully',
-          data: {
-            user: newUser,
-            token
-          },
-          statusCode: 201
-        })
-      }
+          const { token, user } = req.body;
 
-    } catch (err) {
-      ApiResponse.error(res, {
-        error: 'Invalid ID token',
-        statusCode: 401
-      })
-    }
-  }
+          console.log('token and mail is', token, user);
 
-}
+          try {
+               const ticket = await client.verifyIdToken({
+                    idToken: token,
+                    audience: config.google_client_id,
+               });
 
+               const payload = ticket.getPayload();
+               console.log('payload from google is', payload);
 
+               // Check email match
+               if (payload?.email !== user.email) {
+                    return res.status(401).json({ error: 'Email mismatch' });
+               }
+
+               const email = payload?.email;
+               const username = payload?.name;
+               const profile = payload?.profile;
+
+               const dbUser = await UserModel.findOne({ email });
+
+               // if user already registered
+               if (dbUser) {
+                    const token = generateToken(dbUser._id);
+
+                    return ApiResponse.success(res, {
+                         message: 'User logged in successfully',
+                         data: {
+                              dbUser,
+                              token,
+                         },
+                         statusCode: 200,
+                    });
+               }
+
+               // if fresh user came
+               // Create new user
+               if (!dbUser) {
+                    const newUser = await UserModel.create({
+                         email,
+                         username,
+                         profilePicture: profile,
+                    });
+
+                    // Generate JWT token
+                    const token = generateToken(newUser._id);
+
+                    console.log(`Generated token: ${token}`);
+
+                    return ApiResponse.success(res, {
+                         message: 'User registered successfully',
+                         data: {
+                              user: newUser,
+                              token,
+                         },
+                         statusCode: 201,
+                    });
+               }
+          } catch (err) {
+               ApiResponse.error(res, {
+                    error: 'Invalid ID token',
+                    statusCode: 401,
+               });
+          }
+     },
+
+     addBank: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { data } = req.body;
+               const userId = req.user?._id;
+
+               // Validate required fields
+               if (
+                    !data ||
+                    !data.accountNumber ||
+                    !data.accountHolderName ||
+                    !data.ifsc ||
+                    !data.bankName
+               ) {
+                    return ApiResponse.error(res, {
+                         message: 'Missing required fields: accountNumber, accountHolderName, ifsc, bankName',
+                         statusCode: 400,
+                    });
+               }
+
+               // Validate IFSC code format (implement this function)
+               if (!validateIFSC(data.ifsc)) {
+                    return ApiResponse.error(res, {
+                         message: 'Invalid IFSC code format',
+                         statusCode: 400,
+                    });
+               }
+
+               // Validate account number (basic check)
+               if (!/^\d{9,18}$/.test(data.accountNumber)) {
+                    return res.status(400).json({
+                         success: false,
+                         message: 'Account number must be 9-18 digits',
+                    });
+               }
+
+               // Check if bank details already exist for this user
+               const existingUser = await UserModel.findById(userId);
+               console.log('existing usser', existingUser);
+
+               if (existingUser?.bankAccount?.accountNumber) {
+                    return ApiResponse.error(res, {
+                         message: 'Bank account already exists. Please update instead of adding new.',
+                         statusCode: 400,
+                    });
+               }
+
+               // Prepare bank account object
+               const bankAccount = {
+                    bankName: data.bankName.trim(),
+                    accountHolderName: data.accountHolderName.trim(),
+                    accountNumber: data.accountNumber.trim(),
+                    ifscCode: data.ifsc.trim().toUpperCase(),
+                    branchAddress: data.branch?.trim() || '',
+               };
+
+               // Update user with bank details
+               const updatedUser = await UserModel.findByIdAndUpdate(
+                    userId,
+                    { $set: { bankAccount } },
+                    { new: true, runValidators: true },
+               );
+
+               console.log('updayed user', updatedUser);
+               if (!updatedUser) {
+                    return ApiResponse.error(res, {
+                         message: 'User not found',
+                         statusCode: 404,
+                    });
+               }
+
+               // Log the action (implement your logging system)
+               console.log(`Bank details added for user: ${userId}`);
+
+               return ApiResponse.success(res, {
+                    message: 'Bank details added successfully',
+                    data: { bankAccount: updatedUser.bankAccount },
+                    statusCode: 200,
+               });
+          } catch (error) {
+               ApiResponse.error(res, {
+                    message: 'Internal server error',
+                    statusCode: 500,
+               });
+          }
+     },
+};
 
 export default UserController;
-

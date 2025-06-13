@@ -6,7 +6,7 @@ export interface IUser {
   email: string;
   password: string;
   phone: string;
-  profilePicture:string;
+  profilePicture: string;
   balance: number;
   bonusBalance: number;
   lockedBalance: number;
@@ -30,8 +30,17 @@ export interface IUser {
       ifscCode?: string;
       bankName?: string;
       accountHolderName?: string;
+      branchAddress: string;
       passBookImage?: string;
     };
+  };
+  bankAccount?: {
+    accountNumber?: string;
+    ifscCode?: string;
+    bankName?: string;
+    accountHolderName?: string;
+    branchAddress: string;
+    passBookImage?: string;
   };
   isActive: boolean;
   isVerified: boolean;

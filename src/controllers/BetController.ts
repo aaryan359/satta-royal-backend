@@ -30,10 +30,10 @@ class BetController {
                 });
             }
 
-            if (amount < 100) {
+            if (amount < 20) {
                 return ApiResponse.error(res, {
                     error: 'Validation Error',
-                    message: 'Minimum bet amount is 10.',
+                    message: 'Minimum bet amount is 20.',
                     statusCode: 400
                 });
             }
