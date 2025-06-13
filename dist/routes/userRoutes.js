@@ -36,4 +36,5 @@ router.get('/profile', authUser_1.verifyUser, UserController_1.default.getMe);
 router.patch('/update-profile', authUser_1.verifyUser, UserController_1.default.updateMe);
 router.delete('/delete-profile', authUser_1.verifyUser, UserController_1.default.deleteMe);
 router.patch('/balance', authUser_1.verifyUser, UserController_1.default.getBalance);
+router.post('/addbank', authUser_1.verifyUser, UserController_1.default.addBank);
 exports.default = router;

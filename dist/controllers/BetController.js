@@ -38,10 +38,10 @@ BetController.placeBet = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 statusCode: 400
             });
         }
-        if (amount < 100) {
+        if (amount < 20) {
             return ApiResponse_1.default.error(res, {
                 error: 'Validation Error',
-                message: 'Minimum bet amount is 10.',
+                message: 'Minimum bet amount is 20.',
                 statusCode: 400
             });
         }

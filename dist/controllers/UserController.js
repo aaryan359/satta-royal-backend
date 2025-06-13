@@ -18,6 +18,7 @@ const ApiResponse_1 = __importDefault(require("../utils/ApiResponse"));
 const genrate_jwt_1 = require("../utils/genrate-jwt");
 const config_1 = __importDefault(require("../config/config"));
 const google_auth_library_1 = require("google-auth-library");
+const validations_1 = require("../utils/validations");
 const UserController = {
     /**
      * Register a new user
@@ -32,16 +33,18 @@ const UserController = {
                 return ApiResponse_1.default.error(res, {
                     error: 'Validation Error',
                     message: 'Please provide username, email, and password',
-                    statusCode: 400
+                    statusCode: 400,
                 });
             }
             // Check if user already exists
-            const existingUser = yield User_model_1.default.findOne({ $or: [{ email }, { username }] });
+            const existingUser = yield User_model_1.default.findOne({
+                $or: [{ email }, { username }],
+            });
             if (existingUser) {
                 return ApiResponse_1.default.error(res, {
                     error: 'Validation Error',
                     message: 'Email or username already in use',
-                    statusCode: 400
+                    statusCode: 400,
                 });
             }
             // Create new user
@@ -49,7 +52,7 @@ const UserController = {
                 username,
                 email,
                 password,
-                phone
+                phone,
             });
             // Generate JWT token
             const token = (0, genrate_jwt_1.generateToken)(newUser._id);
@@ -58,9 +61,9 @@ const UserController = {
                 message: 'User registered successfully',
                 data: {
                     user: newUser,
-                    token
+                    token,
                 },
-                statusCode: 201
+                statusCode: 201,
             });
         }
         catch (error) {
@@ -78,7 +81,7 @@ const UserController = {
                 return ApiResponse_1.default.error(res, {
                     error: 'Validation Error',
                     message: 'Please provide email and password',
-                    statusCode: 400
+                    statusCode: 400,
                 });
             }
             const user = yield User_model_1.default.findOne({ email });
@@ -86,7 +89,7 @@ const UserController = {
                 return ApiResponse_1.default.error(res, {
                     error: ' User not found',
                     message: 'User not found',
-                    statusCode: 401
+                    statusCode: 401,
                 });
             }
             const token = (0, genrate_jwt_1.generateToken)(user._id);
@@ -94,9 +97,9 @@ const UserController = {
                 message: 'User logged in successfully',
                 data: {
                     user,
-                    token
+                    token,
                 },
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -115,13 +118,13 @@ const UserController = {
                 return ApiResponse_1.default.error(res, {
                     error: 'User not found',
                     message: 'No user found with this ID',
-                    statusCode: 404
+                    statusCode: 404,
                 });
             }
             return ApiResponse_1.default.success(res, {
                 message: 'User profile retrieved successfully',
                 data: user,
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -138,7 +141,7 @@ const UserController = {
             // Filter out unwanted fields
             const filteredBody = {};
             const allowedFields = ['username', 'email', 'avatar'];
-            Object.keys(req.body).forEach(key => {
+            Object.keys(req.body).forEach((key) => {
                 if (allowedFields.includes(key)) {
                     filteredBody[key] = req.body[key];
                 }
@@ -147,7 +150,7 @@ const UserController = {
             return ApiResponse_1.default.success(res, {
                 message: 'User profile updated successfully',
                 data: updatedUser,
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -161,10 +164,12 @@ const UserController = {
     deleteMe: (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         try {
-            yield User_model_1.default.findByIdAndUpdate((_a = req.user) === null || _a === void 0 ? void 0 : _a._id, { active: false });
+            yield User_model_1.default.findByIdAndUpdate((_a = req.user) === null || _a === void 0 ? void 0 : _a._id, {
+                active: false,
+            });
             return ApiResponse_1.default.success(res, {
                 message: 'User account deleted successfully',
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -185,13 +190,13 @@ const UserController = {
                     idNumber,
                     idType,
                     idFront,
-                    idBack
-                }
+                    idBack,
+                },
             }, { new: true });
             return ApiResponse_1.default.success(res, {
                 message: 'KYC documents submitted successfully',
                 data: updatedUser,
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -209,7 +214,7 @@ const UserController = {
             return ApiResponse_1.default.success(res, {
                 message: 'Balance updated successfully',
                 data: user,
-                statusCode: 200
+                statusCode: 200,
             });
         }
         catch (error) {
@@ -225,12 +230,12 @@ const UserController = {
                 return ApiResponse_1.default.error(res, {
                     error: 'User not found',
                     message: 'No user found with this ID',
-                    statusCode: 404
+                    statusCode: 404,
                 });
             }
             return ApiResponse_1.default.success(res, {
                 message: 'Balance retrieved successfully',
-                data: { balance: user.balance }
+                data: { balance: user.balance },
             });
         }
         catch (error) {
@@ -265,9 +270,9 @@ const UserController = {
                     message: 'User logged in successfully',
                     data: {
                         dbUser,
-                        token
+                        token,
                     },
-                    statusCode: 200
+                    statusCode: 200,
                 });
             }
             // if fresh user came
@@ -285,18 +290,89 @@ const UserController = {
                     message: 'User registered successfully',
                     data: {
                         user: newUser,
-                        token
+                        token,
                     },
-                    statusCode: 201
+                    statusCode: 201,
                 });
             }
         }
         catch (err) {
             ApiResponse_1.default.error(res, {
                 error: 'Invalid ID token',
-                statusCode: 401
+                statusCode: 401,
             });
         }
-    })
+    }),
+    addBank: (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const { data } = req.body;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            // Validate required fields
+            if (!data ||
+                !data.accountNumber ||
+                !data.accountHolderName ||
+                !data.ifsc ||
+                !data.bankName) {
+                return ApiResponse_1.default.error(res, {
+                    message: 'Missing required fields: accountNumber, accountHolderName, ifsc, bankName',
+                    statusCode: 400,
+                });
+            }
+            // Validate IFSC code format (implement this function)
+            if (!(0, validations_1.validateIFSC)(data.ifsc)) {
+                return ApiResponse_1.default.error(res, {
+                    message: 'Invalid IFSC code format',
+                    statusCode: 400,
+                });
+            }
+            // Validate account number (basic check)
+            if (!/^\d{9,18}$/.test(data.accountNumber)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Account number must be 9-18 digits',
+                });
+            }
+            // Check if bank details already exist for this user
+            const existingUser = yield User_model_1.default.findById(userId);
+            console.log('existing usser', existingUser);
+            if ((_b = existingUser === null || existingUser === void 0 ? void 0 : existingUser.bankAccount) === null || _b === void 0 ? void 0 : _b.accountNumber) {
+                return ApiResponse_1.default.error(res, {
+                    message: 'Bank account already exists. Please update instead of adding new.',
+                    statusCode: 400,
+                });
+            }
+            // Prepare bank account object
+            const bankAccount = {
+                bankName: data.bankName.trim(),
+                accountHolderName: data.accountHolderName.trim(),
+                accountNumber: data.accountNumber.trim(),
+                ifscCode: data.ifsc.trim().toUpperCase(),
+                branchAddress: ((_c = data.branch) === null || _c === void 0 ? void 0 : _c.trim()) || '',
+            };
+            // Update user with bank details
+            const updatedUser = yield User_model_1.default.findByIdAndUpdate(userId, { $set: { bankAccount } }, { new: true, runValidators: true });
+            console.log('updayed user', updatedUser);
+            if (!updatedUser) {
+                return ApiResponse_1.default.error(res, {
+                    message: 'User not found',
+                    statusCode: 404,
+                });
+            }
+            // Log the action (implement your logging system)
+            console.log(`Bank details added for user: ${userId}`);
+            return ApiResponse_1.default.success(res, {
+                message: 'Bank details added successfully',
+                data: { bankAccount: updatedUser.bankAccount },
+                statusCode: 200,
+            });
+        }
+        catch (error) {
+            ApiResponse_1.default.error(res, {
+                message: 'Internal server error',
+                statusCode: 500,
+            });
+        }
+    }),
 };
 exports.default = UserController;

@@ -134,12 +134,21 @@ const UserSchema = new mongoose_1.default.Schema({
             image: String
         },
         bankAccount: {
-            accountNumber: String,
-            ifscCode: String,
             bankName: String,
             accountHolderName: String,
+            accountNumber: String,
+            ifscCode: String,
+            branchAddress: String,
             passBookImage: String
         }
+    },
+    bankAccount: {
+        bankName: String,
+        accountHolderName: String,
+        accountNumber: String,
+        ifscCode: String,
+        branchAddress: String,
+        passBookImage: String
     },
     // Security and Status
     isActive: {

@@ -6,8 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const AdminController_1 = __importDefault(require("../controllers/AdminController"));
 const authUser_1 = require("../middlewares/authUser");
+const MarketController_1 = __importDefault(require("../controllers/MarketController"));
 const router = (0, express_1.Router)();
 router.get('/getmarket', authUser_1.verifyUser, (req, res, next) => {
     Promise.resolve(AdminController_1.default.getMarket(req, res, next)).catch(next);
+});
+router.get('/getResult', authUser_1.verifyUser, (req, res, next) => {
+    Promise.resolve(MarketController_1.default.GetResult(req, res, next)).catch(next);
 });
 exports.default = router;

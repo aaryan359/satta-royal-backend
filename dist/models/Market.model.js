@@ -17,7 +17,7 @@ const marketSchema = new mongoose.Schema({
     },
     current_winning_value: {
         type: mongoose.Schema.Types.Mixed,
-        default: null
+        default: -1
     },
     status: {
         type: String,
