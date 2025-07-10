@@ -21,6 +21,7 @@ export interface ITransaction {
     accountHolderName?: string;
   };
   
+  razorPayPaymentId:string
   // Reference Information
   referenceId?: mongoose.Types.ObjectId;
   referenceType?: 'bet' | 'bonus' | 'kyc_reward' | 'referral' | 'manual_adjustment';

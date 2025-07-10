@@ -32,6 +32,7 @@ class AdminController {
      ) => {
           const { marketid } = req.params;
           const { result } = req.body;
+          
 
           try {
                // 1. Find and update market
@@ -63,11 +64,18 @@ class AdminController {
                     status: 'pending',
                }).populate('user');
 
+               console.log('Pending bets found:', pendingBets.length);
+               
+
                // 3. Process each bet
                for (const bet of pendingBets) {
-                    if (bet.number === result) {
+                    console.log(`for pending bet result is ${bet.number} result is ${result}`);
+
+                    // Check if bet number matches the declared result
+                    if (bet.number == result) {
                          // Winning bet
                          const payoutAmount = bet.amount * market.odds;
+                         console.log(`Bet won! Payout amount: ${payoutAmount}`);
 
                          // Update bet status and payout
                          bet.status = 'won';
@@ -80,6 +88,7 @@ class AdminController {
                               user.balance += payoutAmount;
                               await user.save();
                          }
+                         console.log(`User ${user?.username} balance updated to ${user?.balance}`);
                     } else {
                          // Losing bet
                          bet.status = 'lost';

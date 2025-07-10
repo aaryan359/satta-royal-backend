@@ -32,20 +32,19 @@ class TransactionController {
           try {
                await session.startTransaction();
 
+               console.log('user data in the backend is', req.body);
                const {
                     amount,
-                    paymentMethod,
-                    paymentGatewayRef,
-                    paymentDetails,
+                    razorpay_payment_id
                } = req.body;
+
+
                const userId = req.user?._id;
 
                console.log(
                     'user data in the backend is',
                     amount,
-                    paymentMethod,
-                    paymentGatewayRef,
-                    paymentDetails,
+                    razorpay_payment_id
                );
 
                // Validate input
@@ -57,21 +56,8 @@ class TransactionController {
                     });
                }
 
-               if (!paymentMethod) {
-                    return ApiResponse.error(res, {
-                         error: 'Validation Error',
-                         message: 'Payment method is required',
-                         statusCode: 400,
-                    });
-               }
 
-               if (!isValidUpiReferenceNumber(paymentGatewayRef)) {
-                    return ApiResponse.error(res, {
-                         error: 'Transaction Failed',
-                         message: 'Enter a valid UTR number ',
-                         statusCode: 400,
-                    });
-               }
+
 
                // Find user
                const user = await UserModel.findById(userId).session(session);
@@ -134,11 +120,9 @@ class TransactionController {
                     amount: amount,
                     balanceBefore: user.balance,
                     balanceAfter: user.balance + amount,
-                    paymentMethod: paymentMethod,
-                    paymentGatewayRef: paymentGatewayRef,
-                    paymentDetails: paymentDetails,
-                    status: 'processing', // Will be updated by payment gateway webhook
-                    description: `Deposit via ${paymentMethod}`,
+                    
+                    razorPayPaymentId: razorpay_payment_id,
+                    status: 'completed',
                     ipAddress: req.ip,
                     deviceInfo: {
                          userAgent: req.get('User-Agent'),
@@ -153,7 +137,7 @@ class TransactionController {
 
                //update the user amount
                user.balance += amount;
-               // Add transaction to user's transaction history
+
                user.transactions.push(transaction._id);
                console.log(' user balance is updayed', user.balance);
 
@@ -182,6 +166,10 @@ class TransactionController {
                session.endSession();
           }
      };
+
+
+
+
 
      static depositBonus = async (
           req: Request,
@@ -268,6 +256,9 @@ class TransactionController {
           }
      };
 
+
+
+
      /**
       * Withdraw money from user account
       */
@@ -280,8 +271,9 @@ class TransactionController {
 
           try {
                await session.startTransaction();
-
-               const { amount, paymentMethod } = req.body;
+               console.log('user data in the backend is', req.body);
+               const { amount } = req.body;
+               console.log('amount is', amount);
                const userId = req.user?._id;
 
                // Validate input
@@ -293,17 +285,8 @@ class TransactionController {
                     });
                }
 
-               if (!paymentMethod) {
-                    return ApiResponse.error(res, {
-                         error: 'Validation Error',
-                         message: 'Payment method and details are required',
-                         statusCode: 400,
-                    });
-               }
-               let methodpayment;
-               if (paymentMethod == 'bank') {
-                    methodpayment = 'bank_transfer';
-               }
+             
+   
 
                // Find user
                const user = await UserModel.findById(userId).session(session);
@@ -369,8 +352,8 @@ class TransactionController {
 
                // Check if user has sufficient balance
                const requiredAmount = amount;
-               
-               
+
+
                if ((user.balance ?? 0) < requiredAmount) {
                     await session.abortTransaction();
                     return ApiResponse.error(res, {
@@ -390,10 +373,9 @@ class TransactionController {
                     type: 'withdrawal',
                     amount: amount,
                     balanceBefore: user.balance + requiredAmount,
-                    balanceAfter: user.balance,
-                    paymentMethod: methodpayment,
+                    balanceAfter: user.balance, 
+                    userBalance: user.balance, 
                     status: 'pending',
-                    description: `Withdrawal via ${methodpayment}`,
                     ipAddress: req.ip,
                     deviceInfo: {
                          userAgent: req.get('User-Agent'),
@@ -410,7 +392,7 @@ class TransactionController {
                await user.save({ session });
 
                await session.commitTransaction();
-               console.log(" amount is",user.balance)
+               console.log(" amount is", user.balance)
 
                return ApiResponse.success(res, {
                     data: {
@@ -434,6 +416,10 @@ class TransactionController {
                session.endSession();
           }
      };
+
+
+
+
 
      /**
       * Get recent transactions for the user
@@ -577,7 +563,7 @@ class TransactionController {
           req: Request,
           res: Response,
           next: NextFunction,
-     ) => {};
+     ) => { };
 
      /**
       * Cancel pending transaction

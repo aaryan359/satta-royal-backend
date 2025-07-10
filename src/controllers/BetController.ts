@@ -4,7 +4,6 @@ import BetModel from "../models/Bet.model";
 import { Request, Response, NextFunction } from "express";
 import ApiResponse from "../utils/ApiResponse";
 import UserModel from "../models/User.model";
-import MarketModel from "../models/Market.model";
 
 
 class BetController {
@@ -14,18 +13,21 @@ class BetController {
     static placeBet = async (req: Request, res: Response, next: NextFunction) => {
         try {
             console.log("req.body", req.body)
-            const { marketId } = req.body;
+            const  marketId = req.body.marketId;
             const amount = Number(req.body.amount);
             const number = Number(req.body.number);
 
+            console.log("marketId", marketId);
+            console.log("amount", amount);
+            console.log("number", number);
 
             const userId = req.user?._id;
 
             // Validate input
-            if (!marketId || !number || !amount) {
+            if (!marketId  || !amount) {
                 return ApiResponse.error(res, {
                     error: 'Validation Error',
-                    message: 'Market, number, and amount are required.',
+                    message: 'Market and amount are required.',
                     statusCode: 400
                 });
             }
@@ -146,7 +148,7 @@ class BetController {
             const bets = await BetModel.find({ user: userId })
                 .populate('user', 'username email')
                 .populate('marketId');
-
+    
            
 
 
@@ -157,10 +159,10 @@ class BetController {
                     statusCode: 200
                 });
             }
-
+            const userBalance = req.user?.balance;
             return ApiResponse.success(res, {
                 message: "Bets retrieved successfully",
-                data: bets,
+                data: { bets, userBalance },
                 statusCode: 200
             });
         } catch (error) {
