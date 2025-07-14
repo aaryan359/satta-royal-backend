@@ -1,6 +1,6 @@
 
 import jwt from 'jsonwebtoken';
-import config from '../config/config';
+
 
 // Function to verify JWT token
 export const verifyToken = (token: string): string | jwt.JwtPayload => {
@@ -8,6 +8,7 @@ export const verifyToken = (token: string): string | jwt.JwtPayload => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     return decoded;
   } catch (error) {
+    console.log(error);
     throw new Error('Invalid token');
   }
 };

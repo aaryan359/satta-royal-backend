@@ -12,6 +12,7 @@ const verifyToken = (token) => {
         return decoded;
     }
     catch (error) {
+        console.log(error);
         throw new Error('Invalid token');
     }
 };

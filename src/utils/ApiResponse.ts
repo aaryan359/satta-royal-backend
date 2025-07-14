@@ -8,6 +8,7 @@ class ApiResponse {
     /**
      * Send success response
      */
+//@ts-ignore
 static success(res: Response, options: {
         data?: any;
         message?: string;
@@ -63,9 +64,11 @@ static success(res: Response, options: {
     /**
      * Send paginated response
      */
+    
     static paginated(
         res: Response,
         options: {
+            
             data: any[];
             total: number;
             page: number;

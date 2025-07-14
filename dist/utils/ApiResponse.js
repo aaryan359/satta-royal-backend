@@ -11,6 +11,7 @@ class ApiResponse {
     /**
      * Send success response
      */
+    //@ts-ignore
     static success(res, options) {
         const { data = null, message = 'Success', statusCode = 200, meta } = options;
         const response = {
