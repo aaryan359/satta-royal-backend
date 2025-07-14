@@ -53,11 +53,15 @@ AdminController.updateMarketResult = (req, res, next) => __awaiter(void 0, void 
             marketId: marketid,
             status: 'pending',
         }).populate('user');
+        console.log('Pending bets found:', pendingBets.length);
         // 3. Process each bet
         for (const bet of pendingBets) {
-            if (bet.number === result) {
+            console.log(`for pending bet result is ${bet.number} result is ${result}`);
+            // Check if bet number matches the declared result
+            if (bet.number == result) {
                 // Winning bet
                 const payoutAmount = bet.amount * market.odds;
+                console.log(`Bet won! Payout amount: ${payoutAmount}`);
                 // Update bet status and payout
                 bet.status = 'won';
                 bet.payout = payoutAmount;
@@ -68,6 +72,7 @@ AdminController.updateMarketResult = (req, res, next) => __awaiter(void 0, void 
                     user.balance += payoutAmount;
                     yield user.save();
                 }
+                console.log(`User ${user === null || user === void 0 ? void 0 : user.username} balance updated to ${user === null || user === void 0 ? void 0 : user.balance}`);
             }
             else {
                 // Losing bet

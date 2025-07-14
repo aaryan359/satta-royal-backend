@@ -26,15 +26,18 @@ BetController.placeBet = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     var _b;
     try {
         console.log("req.body", req.body);
-        const { marketId } = req.body;
+        const marketId = req.body.marketId;
         const amount = Number(req.body.amount);
         const number = Number(req.body.number);
+        console.log("marketId", marketId);
+        console.log("amount", amount);
+        console.log("number", number);
         const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
         // Validate input
-        if (!marketId || !number || !amount) {
+        if (!marketId || !amount) {
             return ApiResponse_1.default.error(res, {
                 error: 'Validation Error',
-                message: 'Market, number, and amount are required.',
+                message: 'Market and amount are required.',
                 statusCode: 400
             });
         }
@@ -122,7 +125,7 @@ BetController.placeBet = (req, res, next) => __awaiter(void 0, void 0, void 0, f
  * Get all bets for a user
  */
 BetController.getUserBets = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _b, _c;
     try {
         const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
         if (!userId) {
@@ -142,9 +145,10 @@ BetController.getUserBets = (req, res, next) => __awaiter(void 0, void 0, void 0
                 statusCode: 200
             });
         }
+        const userBalance = (_c = req.user) === null || _c === void 0 ? void 0 : _c.balance;
         return ApiResponse_1.default.success(res, {
             message: "Bets retrieved successfully",
-            data: bets,
+            data: { bets, userBalance },
             statusCode: 200
         });
     }

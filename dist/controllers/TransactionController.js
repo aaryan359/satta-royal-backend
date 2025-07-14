@@ -40,28 +40,15 @@ TransactionController.depositMoney = (req, res, next) => __awaiter(void 0, void 
     const session = yield mongoose_1.default.startSession();
     try {
         yield session.startTransaction();
-        const { amount, paymentMethod, paymentGatewayRef, paymentDetails, } = req.body;
+        console.log('user data in the backend is', req.body);
+        const { amount, razorpay_payment_id } = req.body;
         const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
-        console.log('user data in the backend is', amount, paymentMethod, paymentGatewayRef, paymentDetails);
+        console.log('user data in the backend is', amount, razorpay_payment_id);
         // Validate input
         if (!amount || amount <= 0) {
             return ApiResponse_1.default.error(res, {
                 error: 'Validation Error',
                 message: 'Amount must be greater than 0',
-                statusCode: 400,
-            });
-        }
-        if (!paymentMethod) {
-            return ApiResponse_1.default.error(res, {
-                error: 'Validation Error',
-                message: 'Payment method is required',
-                statusCode: 400,
-            });
-        }
-        if (!isValidUpiReferenceNumber(paymentGatewayRef)) {
-            return ApiResponse_1.default.error(res, {
-                error: 'Transaction Failed',
-                message: 'Enter a valid UTR number ',
                 statusCode: 400,
             });
         }
@@ -119,11 +106,8 @@ TransactionController.depositMoney = (req, res, next) => __awaiter(void 0, void 
             amount: amount,
             balanceBefore: user.balance,
             balanceAfter: user.balance + amount,
-            paymentMethod: paymentMethod,
-            paymentGatewayRef: paymentGatewayRef,
-            paymentDetails: paymentDetails,
-            status: 'processing', // Will be updated by payment gateway webhook
-            description: `Deposit via ${paymentMethod}`,
+            razorPayPaymentId: razorpay_payment_id,
+            status: 'completed',
             ipAddress: req.ip,
             deviceInfo: {
                 userAgent: req.get('User-Agent'),
@@ -136,7 +120,6 @@ TransactionController.depositMoney = (req, res, next) => __awaiter(void 0, void 
         yield transaction.save({ session });
         //update the user amount
         user.balance += amount;
-        // Add transaction to user's transaction history
         user.transactions.push(transaction._id);
         console.log(' user balance is updayed', user.balance);
         yield user.save({ session });
@@ -245,7 +228,9 @@ TransactionController.withdrawMoney = (req, res, next) => __awaiter(void 0, void
     const session = yield mongoose_1.default.startSession();
     try {
         yield session.startTransaction();
-        const { amount, paymentMethod } = req.body;
+        console.log('user data in the backend is', req.body);
+        const { amount } = req.body;
+        console.log('amount is', amount);
         const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
         // Validate input
         if (!amount || amount <= 0) {
@@ -254,17 +239,6 @@ TransactionController.withdrawMoney = (req, res, next) => __awaiter(void 0, void
                 message: 'Amount must be greater than 0',
                 statusCode: 400,
             });
-        }
-        if (!paymentMethod) {
-            return ApiResponse_1.default.error(res, {
-                error: 'Validation Error',
-                message: 'Payment method and details are required',
-                statusCode: 400,
-            });
-        }
-        let methodpayment;
-        if (paymentMethod == 'bank') {
-            methodpayment = 'bank_transfer';
         }
         // Find user
         const user = yield User_model_1.default.findById(userId).session(session);
@@ -340,9 +314,8 @@ TransactionController.withdrawMoney = (req, res, next) => __awaiter(void 0, void
             amount: amount,
             balanceBefore: user.balance + requiredAmount,
             balanceAfter: user.balance,
-            paymentMethod: methodpayment,
+            userBalance: user.balance,
             status: 'pending',
-            description: `Withdrawal via ${methodpayment}`,
             ipAddress: req.ip,
             deviceInfo: {
                 userAgent: req.get('User-Agent'),

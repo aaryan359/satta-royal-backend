@@ -32,6 +32,11 @@ const TransactionSchema = new mongoose_1.default.Schema({
         required: true,
         min: 0
     },
+    razorPayPaymentId: {
+        type: String,
+        sparse: true // Only for deposit transactions
+    },
+    // Payment gateway reference (e.g., UPI transaction ID, bank transfer reference)
     paymentGatewayRef: {
         type: String,
         sparse: true // Only for deposit/withdrawal transactions
