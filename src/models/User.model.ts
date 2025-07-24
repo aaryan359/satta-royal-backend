@@ -264,6 +264,8 @@ UserSchema.methods.comparePassword = async function (
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+
+
 // Method to increment login attempts
 UserSchema.methods.incLoginAttempts = function (): Promise<any> {
   // If we have a previous lock that has expired, restart at 1

@@ -44,6 +44,8 @@ const UserController = {
                     });
                }
 
+               
+
                // Create new user
                const newUser = await UserModel.create({
                     username,
@@ -88,6 +90,7 @@ const UserController = {
 
                const user = await UserModel.findOne({ email });
 
+
                if (!user) {
                     return ApiResponse.error(res, {
                          error: ' User not found',
@@ -95,6 +98,19 @@ const UserController = {
                          statusCode: 401,
                     });
                }
+
+
+
+
+               if(user?.password != password){
+                    return ApiResponse.error(res, {
+                         error: 'Password wrong',
+                         message: 'Wrong Password',
+                         statusCode: 401,
+                    });
+
+               }
+               
 
                const token = generateToken(user._id);
 
