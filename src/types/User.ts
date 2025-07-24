@@ -36,6 +36,7 @@ export interface IUser {
       passBookImage?: string;
     };
   };
+  upiId:string;
   bankAccount?: {
     accountNumber?: string;
     ifscCode?: string;

@@ -10,7 +10,6 @@ import { validateIFSC } from '../utils/validations';
 import { generateOTP } from '../utils/GenrateOTP';
 import transporter from '../utils/EmailTransport';
 
-
 const UserController = {
      /**
       * Register a new user
@@ -45,8 +44,6 @@ const UserController = {
                          statusCode: 400,
                     });
                }
-
-               
 
                // Create new user
                const newUser = await UserModel.create({
@@ -92,7 +89,6 @@ const UserController = {
 
                const user = await UserModel.findOne({ email });
 
-
                if (!user) {
                     return ApiResponse.error(res, {
                          error: ' User not found',
@@ -101,18 +97,13 @@ const UserController = {
                     });
                }
 
-
-
-
-               if(user?.password != password){
+               if (user?.password != password) {
                     return ApiResponse.error(res, {
                          error: 'Password wrong',
                          message: 'Wrong Password',
                          statusCode: 401,
                     });
-
                }
-
 
                const token = generateToken(user._id);
 
@@ -448,44 +439,49 @@ const UserController = {
           }
      },
 
-     forgotPassword: async(req: Request, res: Response, next: NextFunction)=>{
-        try {
-            const { email } = req.body;
+     forgotPassword: async (
+          req: Request,
+          res: Response,
+          next: NextFunction,
+     ) => {
+          try {
+               const { email } = req.body;
 
-            // Validate email
-            if (!email) {
-                return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'Email is required',
-                    statusCode: 400,
-                });
-            }
+               // Validate email
+               if (!email) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Email is required',
+                         statusCode: 400,
+                    });
+               }
 
-            // Check if user exists
-            const user = await UserModel.findOne({ email });
-            if (!user) {
-                return ApiResponse.error(res, {
-                    error: 'Not Found',
-                    message: 'No user found with this email',
-                    statusCode: 404,
-                });
-            }
+               // Check if user exists
+               const user = await UserModel.findOne({ email });
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: 'Not Found',
+                         message: 'No user found with this email',
+                         statusCode: 404,
+                    });
+               }
 
-            // Generate OTP
-            const otp = generateOTP();
-            const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+               // Generate OTP
+               const otp = generateOTP();
+               console.log('otp is', otp);
+               const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
 
-            // Save OTP to user document
-            user.resetPasswordOTP = otp;
-            user.resetPasswordOTPExpiry = otpExpiry;
-            await user.save();
+               // Save OTP to user document
+               user.resetPasswordOTP = otp;
+               user.resetPasswordOTPExpiry = otpExpiry;
+               await user.save();
 
-            // Send email with OTP
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Password Reset OTP',
-                html: `
+               // Send email with OTP
+               const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: 'Password Reset OTP',
+                    html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                         <h2 style="color: #4F46E5;">Password Reset Request</h2>
                         <p>You requested to reset your password. Here is your OTP:</p>
@@ -497,133 +493,193 @@ const UserController = {
                         <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;">
                         <p style="color: #6B7280; font-size: 14px;">© ${new Date().getFullYear()} Your App Name</p>
                     </div>
-                `
-            };
+                `,
+               };
 
-            await transporter.sendMail(mailOptions);
+               await transporter.sendMail(mailOptions);
 
-            return ApiResponse.success(res, {
-                message: 'OTP sent to your email',
-                statusCode: 200,
-                data: { email }
-            });
-
-        } catch (error) {
-            console.error('Forgot password error:', error);
-            return ApiResponse.error(res, {
-                error: 'Server Error',
-                message: 'Failed to process forgot password request',
-                statusCode: 500
-            });
-        }
+               return ApiResponse.success(res, {
+                    message: 'OTP sent to your email',
+                    statusCode: 200,
+                    data: { email },
+               });
+          } catch (error) {
+               console.error('Forgot password error:', error);
+               return ApiResponse.error(res, {
+                    error: 'Server Error',
+                    message: 'Failed to process forgot password request',
+                    statusCode: 500,
+               });
+          }
      },
 
+     verifyOtp: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { email, otp } = req.body;
 
-     verifyOtp: async (req: Request, res: Response, next: NextFunction)=> {
-        try {
-            const { email, otp } = req.body;
+               // Validate input
+               if (!email || !otp) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Email and OTP are required',
+                         statusCode: 400,
+                    });
+               }
 
-            // Validate input
-            if (!email || !otp) {
-                return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'Email and OTP are required',
-                    statusCode: 400,
-                });
-            }
+               // Find user
+               const user = await UserModel.findOne({ email });
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: 'Not Found',
+                         message: 'No user found with this email',
+                         statusCode: 404,
+                    });
+               }
 
-            // Find user
-            const user = await UserModel.findOne({ email });
-            if (!user) {
-                return ApiResponse.error(res, {
-                    error: 'Not Found',
-                    message: 'No user found with this email',
-                    statusCode: 404,
-                });
-            }
+               // Check if OTP matches and is not expired
+               if (
+                    user.resetPasswordOTP !== otp ||
+                    !user.resetPasswordOTPExpiry ||
+                    new Date() > user.resetPasswordOTPExpiry
+               ) {
+                    return ApiResponse.error(res, {
+                         error: 'Invalid OTP',
+                         message: 'Invalid or expired OTP',
+                         statusCode: 400,
+                    });
+               }
 
-            // Check if OTP matches and is not expired
-            if (user.resetPasswordOTP !== otp || 
-                !user.resetPasswordOTPExpiry || 
-                new Date() > user.resetPasswordOTPExpiry) {
-                return ApiResponse.error(res, {
-                    error: 'Invalid OTP',
-                    message: 'Invalid or expired OTP',
-                    statusCode: 400,
-                });
-            }
+               // OTP is valid
+               return ApiResponse.success(res, {
+                    message: 'OTP verified successfully',
+                    statusCode: 200,
+                    data: { email, otp },
+               });
+          } catch (error) {
+               console.error('Verify OTP error:', error);
+               return ApiResponse.error(res, {
+                    error: 'Server Error',
+                    message: 'Failed to verify OTP',
+                    statusCode: 500,
+               });
+          }
+     },
+     resetPassword: async (req: Request, res: Response, next: NextFunction) => {
+          try {
+               const { email, otp, newPassword } = req.body;
 
-            // OTP is valid
-            return ApiResponse.success(res, {
-                message: 'OTP verified successfully',
-                statusCode: 200,
-                data: { email, otp }
-            });
+               // Validate input
+               if (!email || !otp || !newPassword) {
+                    return ApiResponse.error(res, {
+                         error: 'Validation Error',
+                         message: 'Email, OTP and new password are required',
+                         statusCode: 400,
+                    });
+               }
 
-        } catch (error) {
-            console.error('Verify OTP error:', error);
-            return ApiResponse.error(res, {
-                error: 'Server Error',
-                message: 'Failed to verify OTP',
-                statusCode: 500
-            });
-        }
-    },
-    resetPassword: async (req: Request, res: Response, next: NextFunction) =>{
-        try {
-            const { email, otp, newPassword } = req.body;
+               // Find user
+               const user = await UserModel.findOne({ email });
+               if (!user) {
+                    return ApiResponse.error(res, {
+                         error: 'Not Found',
+                         message: 'No user found with this email',
+                         statusCode: 404,
+                    });
+               }
 
-            // Validate input
-            if (!email || !otp || !newPassword) {
-                return ApiResponse.error(res, {
-                    error: 'Validation Error',
-                    message: 'Email, OTP and new password are required',
-                    statusCode: 400,
-                });
-            }
+               // Verify OTP again (in case it took a while to submit new password)
+               if (
+                    user.resetPasswordOTP !== otp ||
+                    !user.resetPasswordOTPExpiry ||
+                    new Date() > user.resetPasswordOTPExpiry
+               ) {
+                    return ApiResponse.error(res, {
+                         error: 'Invalid OTP',
+                         message: 'Invalid or expired OTP',
+                         statusCode: 400,
+                    });
+               }
 
-            // Find user
-            const user = await UserModel.findOne({ email });
-            if (!user) {
-                return ApiResponse.error(res, {
-                    error: 'Not Found',
-                    message: 'No user found with this email',
-                    statusCode: 404,
-                });
-            }
+               // Update password
+               user.password = newPassword;
+               user.resetPasswordOTP = '';
+               user.resetPasswordOTPExpiry = new Date(Date.now());
+               await user.save();
 
-            // Verify OTP again (in case it took a while to submit new password)
-            if (user.resetPasswordOTP !== otp || 
-                !user.resetPasswordOTPExpiry || 
-                new Date() > user.resetPasswordOTPExpiry) {
-                return ApiResponse.error(res, {
-                    error: 'Invalid OTP',
-                    message: 'Invalid or expired OTP',
-                    statusCode: 400,
-                });
-            }
+               return ApiResponse.success(res, {
+                    message: 'Password reset successfully',
+                    statusCode: 200,
+               });
+          } catch (error) {
+               console.error('Reset password error:', error);
+               return ApiResponse.error(res, {
+                    error: 'Server Error',
+                    message: 'Failed to reset password',
+                    statusCode: 500,
+               });
+          }
+     },
 
-            // Update password
-            user.password = newPassword;
-            user.resetPasswordOTP = "";
-            user.resetPasswordOTPExpiry = new Date(Date.now());
-            await user.save();
+     addupiID: async (req: Request, res: Response, next: NextFunction) => {
+          try {
 
-            return ApiResponse.success(res, {
-                message: 'Password reset successfully',
-                statusCode: 200,
-            });
+               console.log("  req.body is",req.body)
+               const { upiId } = req.body;
+               const userId = req.user?._id;
 
-        } catch (error) {
-            console.error('Reset password error:', error);
-            return ApiResponse.error(res, {
-                error: 'Server Error',
-                message: 'Failed to reset password',
-                statusCode: 500
-            });
-        }
-    }
+               console.log(" upi id is",upiId);
 
+               if (!userId) {
+                    return res
+                         .status(401)
+                         .json({ success: false, message: 'Unauthorized' });
+               }
+
+               
+
+               if(!upiId){
+                    return res.status(400).json({
+                         success: false,
+                         message: 'Enter upi id',
+                    });
+               }
+
+               console.log(" after upi id check");
+
+               // Check if UPI ID already exists for another user
+               const existingUser = await UserModel.findOne({ upiId });
+               if (
+                    existingUser &&
+                    existingUser._id.toString() !== userId.toString()
+               ) {
+                    return res.status(400).json({
+                         success: false,
+                         message: 'This UPI ID is already registered with another account',
+                    });
+               }
+
+               // Update user's UPI ID
+               const updatedUser = await UserModel.findByIdAndUpdate(
+                    userId,
+                    { $set: { upiId } },
+                    { new: true, select: '-password' }, // Return updated user without password
+               );
+
+               if (!updatedUser) {
+                    return res
+                         .status(404)
+                         .json({ success: false, message: 'User not found' });
+               }
+
+               res.status(200).json({
+                    success: true,
+                    message: 'UPI ID updated successfully',
+                    user: updatedUser,
+               });
+          } catch (error) {
+               next(error);
+          }
+     },
 };
 
 export default UserController;

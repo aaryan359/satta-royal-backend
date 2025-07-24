@@ -69,6 +69,8 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
 
 
+
+
   // Total withdrawals till date
   totalWithdrawals: {
     type: Number,
@@ -155,6 +157,12 @@ const UserSchema = new mongoose.Schema<IUser>({
     branchAddress: String,
     passBookImage: String
   },
+  upiId: {
+  type: String,
+  unique: true,
+  sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
+  maxlength: 50
+},
   // Security and Status
   isActive: {
     type: Boolean,
