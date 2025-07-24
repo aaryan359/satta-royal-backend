@@ -14,6 +14,8 @@ export interface IUser {
   totalWithdrawals: number;
   dailyDepositLimit: number;
   dailyWithdrawalLimit: number;
+  resetPasswordOTP:string;
+  resetPasswordOTPExpiry:Date;
   kycStatus: 'pending' | 'submitted' | 'under_review' | 'approved' | 'rejected';
   kycDocuments: {
     aadhar?: {

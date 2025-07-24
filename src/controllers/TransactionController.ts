@@ -32,7 +32,7 @@ class TransactionController {
           try {
                await session.startTransaction();
 
-               console.log('user data in the backend is', req.body);
+               
                const {
                     amount,
                     razorpay_payment_id
@@ -48,10 +48,10 @@ class TransactionController {
                );
 
                // Validate input
-               if (!amount || amount <= 0) {
+               if (!amount || amount <= 10) {
                     return ApiResponse.error(res, {
                          error: 'Validation Error',
-                         message: 'Amount must be greater than 0',
+                         message: 'Amount must be greater than 10',
                          statusCode: 400,
                     });
                }
@@ -271,9 +271,9 @@ class TransactionController {
 
           try {
                await session.startTransaction();
-               console.log('user data in the backend is', req.body);
+               
                const { amount } = req.body;
-               console.log('amount is', amount);
+               
                const userId = req.user?._id;
 
                // Validate input
@@ -375,6 +375,7 @@ class TransactionController {
                     balanceBefore: user.balance + requiredAmount,
                     balanceAfter: user.balance, 
                     userBalance: user.balance, 
+                    
                     status: 'pending',
                     ipAddress: req.ip,
                     deviceInfo: {

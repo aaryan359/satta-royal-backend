@@ -184,6 +184,14 @@ const UserSchema = new mongoose.Schema<IUser>({
   lockUntil: {
     type: Date
   },
+  resetPasswordOTP: {
+    type: String,
+    required: false
+  },
+  resetPasswordOTPExpiry: {
+    type: Date,
+    required: false
+  },
   // Device and Location tracking
   registrationIP: {
     type: String
@@ -220,26 +228,6 @@ const UserSchema = new mongoose.Schema<IUser>({
 
 UserSchema.index({ createdAt: -1 });
 
-// Generate referral code before saving
-UserSchema.pre('save', function (next) {
-  if (this.isNew && !this.referralCode) {
-    this.referralCode = `REF${Math.random().toString(36).substr(2, 6).toUpperCase()}${Date.now().toString(36).toUpperCase()}`;
-  }
-  next();
-});
-
-// Hash password before saving
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
 
 // Update timestamp on save
 UserSchema.pre('save', function (next) {
@@ -256,14 +244,6 @@ UserSchema.virtual('isLocked').get(function () {
 UserSchema.virtual('availableBalance').get(function () {
   return Math.max(0, this.balance - this.lockedBalance);
 });
-
-// Method to compare passwords
-UserSchema.methods.comparePassword = async function (
-  candidatePassword: string
-): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
 
 
 // Method to increment login attempts

@@ -12,14 +12,12 @@ class BetController {
      */
     static placeBet = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            console.log("req.body", req.body)
+            
             const  marketId = req.body.marketId;
             const amount = Number(req.body.amount);
             const number = Number(req.body.number);
 
-            console.log("marketId", marketId);
-            console.log("amount", amount);
-            console.log("number", number);
+       
 
             const userId = req.user?._id;
 
@@ -32,10 +30,10 @@ class BetController {
                 });
             }
 
-            if (amount < 20) {
+            if (amount < 10) {
                 return ApiResponse.error(res, {
                     error: 'Validation Error',
-                    message: 'Minimum bet amount is 20.',
+                    message: 'Minimum bet amount is 10.',
                     statusCode: 400
                 });
             }
@@ -68,14 +66,14 @@ class BetController {
                 });
             }
 
-            console.log(" user balance before placing bet ", user.balance);
+           
             user.balance -= amount;
             await user.save();
 
 
-            console.log(" user balance after placing bet ", user.balance);
+           
             const userBalance = user.balance;
-            console.log(" user balance  ", userBalance);
+           
 
 
 
@@ -97,8 +95,7 @@ class BetController {
                 });
             }
 
-            // Log the bet creation
-            console.log(`Bet created successfully: ${bet._id} for user: ${userId}`);
+            
 
             // Update user's bet history
             if (user) {
