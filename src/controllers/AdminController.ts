@@ -5,6 +5,7 @@ import moment from 'moment';
 import TransactionModel from '../models/Transaction.model';
 import BetModel from '../models/Bet.model';
 import UserModel from '../models/User.model';
+import Admin from '../models/Admin.model';
 
 interface UserAnalytics {
      userId: string;
@@ -32,7 +33,7 @@ class AdminController {
      ) => {
           const { marketid } = req.params;
           const { result } = req.body;
-          
+
 
           try {
                // 1. Find and update market
@@ -65,7 +66,7 @@ class AdminController {
                }).populate('user');
 
                console.log('Pending bets found:', pendingBets.length);
-               
+
 
                // 3. Process each bet
                for (const bet of pendingBets) {
@@ -328,7 +329,7 @@ class AdminController {
      /**
       *  find user with particular transaction
       */
-     static findUser = async () => {};
+     static findUser = async () => { };
 
      static getTodayResult = async (req: Request, res: Response) => {
           const { marketid } = req.params;
@@ -395,8 +396,7 @@ class AdminController {
           next: NextFunction,
      ) => {
           try {
-               const transactions =
-                    await TransactionModel.find().populate('user');
+               const transactions = await TransactionModel.find().populate('user');
                console.log('transactions ');
 
                return ApiResponse.success(res, {
@@ -703,6 +703,99 @@ class AdminController {
                });
           }
      };
+
+
+     // Admin Controller - Fixed (No Authentication Required)
+        static updateAdminContactInfo = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            let { whatsapp, telegram, supportMessage } = req.body;
+
+            // Convert empty strings to undefined to match schema
+            whatsapp = whatsapp?.trim() || undefined;
+            telegram = telegram?.trim() || undefined;
+            supportMessage = supportMessage?.trim() || undefined;
+
+            console.log("Updating contact info:", { whatsapp, telegram, supportMessage });
+
+            // Find or create admin with upsert
+            const admin = await Admin.findOneAndUpdate(
+                {}, 
+                {
+                    $set: {
+                        name: 'Admin',
+                        email: 'admin@example.com',
+                        password: 'defaultpassword' ,
+                        'contactInfo.whatsapp': whatsapp,
+                        'contactInfo.telegram': telegram,
+                        'contactInfo.supportMessage': supportMessage
+                    }
+                },
+                { 
+                    new: true,
+                    upsert: true,
+                    setDefaultsOnInsert: true 
+                }
+            ).select('contactInfo');
+
+            return ApiResponse.success(res, {
+                message: 'Contact info updated successfully',
+                data: admin.contactInfo,
+                statusCode: 200,
+            });
+        } catch (error: any) {
+            console.error("Error in updateAdminContactInfo:", error);
+            return ApiResponse.error(res, {
+                message: 'Failed to update contact info',
+                error: error.message,
+                statusCode: 500,
+            });
+        }
+    };
+
+    static getAdminContactInfo = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            console.log("Fetching admin contact info");
+
+            // Find or create admin if doesn't exist
+            let admin = await Admin.findOne({}).select('contactInfo');
+            
+            if (!admin) {
+                console.log("No admin found, creating default admin...");
+                admin = await Admin.create({
+                    name: 'Admin',
+                    email: 'admin@example.com',
+                    password: 'defaultpassword',
+                    contactInfo: {
+                        whatsapp: "+91-9876543210",
+                       telegram: "+91-9876543210",
+                         supportMessage: "this is the latest version,if new version came then we notify you"
+                        }
+                });
+            }
+
+            // Ensure consistent response format
+            const contactInfo = admin.contactInfo || {
+                whatsapp: "+91-9876543210",
+                telegram: "+91-9876543210",
+                supportMessage: "this is the latest version,if new version came then we notify you"
+            };
+
+            return ApiResponse.success(res, {
+                message: 'This is the latest version,if new version came then we notify you',
+                data: contactInfo,
+                statusCode: 200,
+            });
+        } catch (error: any) {
+            console.error("Error in getAdminContactInfo:", error);
+            return ApiResponse.error(res, {
+                message: 'Failed to retrieve contact info',
+                error: error.message,
+                statusCode: 500,
+            });
+        }
+    };
 }
+
+
 
 export default AdminController;

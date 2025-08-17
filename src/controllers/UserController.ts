@@ -513,6 +513,7 @@ const UserController = {
           }
      },
 
+
      verifyOtp: async (req: Request, res: Response, next: NextFunction) => {
           try {
                const { email, otp } = req.body;
@@ -564,6 +565,8 @@ const UserController = {
                });
           }
      },
+
+
      resetPassword: async (req: Request, res: Response, next: NextFunction) => {
           try {
                const { email, otp, newPassword } = req.body;
@@ -619,6 +622,7 @@ const UserController = {
                });
           }
      },
+
 
      addupiID: async (req: Request, res: Response, next: NextFunction) => {
           try {
@@ -680,6 +684,7 @@ const UserController = {
                next(error);
           }
      },
+     
 };
 
 export default UserController;

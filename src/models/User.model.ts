@@ -224,6 +224,7 @@ const UserSchema = new mongoose.Schema<IUser>({
       default: 'INR'
     }
   },
+
   createdAt: {
     type: Date,
     default: Date.now

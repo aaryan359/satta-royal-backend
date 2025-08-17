@@ -54,6 +54,17 @@ router.get('/user-analytics',(req, res, next) => {
 })
 
 
+router.get('/contact-info-get',(req, res, next) => {
+  Promise.resolve(AdminController.getAdminContactInfo(req, res,next)).catch(next);
+
+})
+
+router.put('/contact-info-post',(req, res, next) => {
+  Promise.resolve(AdminController.updateAdminContactInfo(req, res,next)).catch(next);
+
+})
+
+
 
 
 

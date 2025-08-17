@@ -38,6 +38,8 @@ connectDB().then(() => {
 });
 
 
+console.log(" working in app.ts")
+
 app.use('/api', routes);
 
 
